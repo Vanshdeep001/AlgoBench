@@ -57,6 +57,11 @@ export const logoutUser = createAsyncThunk(
       await axiosClient.post('/user/logout');
       return null;
     } catch (error) {
+      // If we get a 401, it means the token is already invalid/expired
+      // In this case, we should still log out on the client side
+      if (error.response?.status === 401) {
+        return null; // Treat as successful logout
+      }
       return rejectWithValue({
         message: 'Logout failed',
       });

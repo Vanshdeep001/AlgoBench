@@ -106,7 +106,8 @@ const login = async (req, res) => {
  */
 const logout = async (req, res) => {
     try {
-        const { token } = req.cookies;
+        // Check for both cookie names
+        const token = req.cookies.token || req.cookies.admin_auth;
 
         if (!token) {
             return res.status(200).json({ message: "Already logged out" });
@@ -119,7 +120,14 @@ const logout = async (req, res) => {
             await redisClient.expireAt(`token:${token}`, payload.exp);
         }
 
+        // Clear both possible cookie names
         res.cookie("token", null, {
+            expires: new Date(0),
+            httpOnly: true,
+            sameSite: "lax",
+        });
+
+        res.cookie("admin_auth", null, {
             expires: new Date(0),
             httpOnly: true,
             sameSite: "lax",

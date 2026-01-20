@@ -1,2 +1,70 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+@theme {
+    --font-sans: "Outfit", sans-serif;
+    --font-display: "Space Grotesk", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+
+    --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
+    --animate-fade-in: fade-in 1s ease-out forwards;
+    --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
+
+    @keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes glow-pulse {
+
+        0%,
+        100% {
+            opacity: 0.5;
+            filter: blur(20px);
+        }
+
+        50% {
+            opacity: 0.8;
+            filter: blur(25px);
+        }
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -1000px 0;
+        }
+
+        100% {
+            background-position: 1000px 0;
+        }
+    }
+
+    @keyframes border-flow {
+
+        0%,
+        100% {
+            border-color: rgba(212, 175, 55, 0.2);
+        }
+
+        50% {
+            border-color: rgba(212, 175, 55, 0.4);
+        }
+    }
+}
