@@ -12,6 +12,7 @@ import AdminVideo from "./components/AdminVideo"
 import AdminDelete from "./components/AdminDelete"
 import AdminUpload from "./components/AdminUpload"
 import LandingPage from "./pages/landingPage"
+import DSAVisualizer from "./components/visualizer"
 
 function App() {
 
@@ -41,6 +42,7 @@ function App() {
         <Route path="/admin/video" element={isAuthenticated && user?.role === 'admin' ? <AdminVideo /> : <Navigate to="/" />} />
         <Route path="/admin/upload/:problemId" element={isAuthenticated && user?.role === 'admin' ? <AdminUpload /> : <Navigate to="/" />} />
         <Route path="/problem/:problemId" element={<ProblemPage />}></Route>
+        <Route path="/visualizer" element={<DSAVisualizer />}></Route>
 
       </Routes>
     </>

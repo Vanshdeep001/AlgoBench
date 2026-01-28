@@ -59,6 +59,7 @@ function Homepage() {
           <NavLink to="/" className="btn btn-ghost text-xl">LeetCode</NavLink>
         </div>
         <div className="flex-none gap-4">
+          <NavLink to="/visualizer" className="btn btn-ghost">Visualizer</NavLink>
           <div className="dropdown dropdown-end">
             <div tabIndex={0} className="btn btn-ghost">
               {user?.firstName}

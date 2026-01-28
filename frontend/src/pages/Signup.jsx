@@ -81,7 +81,7 @@ function Signup() {
                 <a href="/#problems" className="hover:text-white transition-colors">Problems</a>
                 <a href="/#interview" className="hover:text-white transition-colors">Interview</a>
                 <a href="/#contests" className="hover:text-white transition-colors">Contests</a>
-                <a href="/#visualizer" className="hover:text-white transition-colors">Visualizer</a>
+                <NavLink to="/visualizer" className="hover:text-white transition-colors">Visualizer</NavLink>
               </div>
 
               <div className="hidden md:flex items-center gap-3">
@@ -114,7 +114,7 @@ function Signup() {
           <a href="/#problems" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Problems</a>
           <a href="/#interview" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Interview</a>
           <a href="/#contests" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Contests</a>
-          <a href="/#visualizer" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Visualizer</a>
+          <NavLink to="/visualizer" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Visualizer</NavLink>
           <div className="w-16 h-px my-4" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
           <NavLink to="/login" onClick={() => setMobileMenuOpen(false)} className="text-xl font-medium text-slate-300 hover:text-white">Login</NavLink>
           <NavLink to="/signup" onClick={() => setMobileMenuOpen(false)} className="px-8 py-4 rounded-full text-white font-bold text-lg transition-colors w-full text-center max-w-xs" style={{ backgroundColor: '#D4AF37' }}>
