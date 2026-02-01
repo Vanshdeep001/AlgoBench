@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import ArrayView from './ArrayView';
 import TreeView from './TreeView';
 import GraphView from './GraphView';
+import DPTableView from './DPTableView';
 import { useAnimator } from '../hooks/useAnimator';
 
 const VisualizationCanvas = ({
@@ -30,6 +31,14 @@ const VisualizationCanvas = ({
 
   useEffect(() => {
     if (isPlaying && !isAnimating) {
+      // Don't restart if already completed
+      if (currentState.isComplete) {
+        // Dispatch stop event just in case
+        const stopEvent = new CustomEvent('stopPlayback');
+        window.dispatchEvent(stopEvent);
+        return;
+      }
+
       startAnimation({
         onStepChange,
         onStatsChange,
@@ -41,12 +50,21 @@ const VisualizationCanvas = ({
       pauseAnimation();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, isAnimating]);
+  }, [isPlaying, isAnimating, currentState.isComplete]);
 
   useEffect(() => {
     resetAnimation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAlgorithm, inputData, target, arraySize]);
+
+  // CRITICAL FIX: Stop playing when animation completes
+  useEffect(() => {
+    if (currentState.isComplete && isPlaying) {
+      // Dispatch event to parent to stop playback
+      const stopEvent = new CustomEvent('stopPlayback');
+      window.dispatchEvent(stopEvent);
+    }
+  }, [currentState.isComplete, isPlaying]);
 
   if (!selectedAlgorithm) {
     return (
@@ -88,6 +106,16 @@ const VisualizationCanvas = ({
             currentState={currentState}
             onNodeClick={(node) => {
               onExplanationChange(`Node: ${node.value}. ${currentState.explanation || ''}`);
+            }}
+          />
+        );
+      case 'dp':
+        return (
+          <DPTableView
+            data={data}
+            currentState={currentState}
+            onElementClick={(cell) => {
+              onExplanationChange(`Cell [${cell.r || cell.i}]: ${cell.val}. ${currentState.explanation || ''}`);
             }}
           />
         );

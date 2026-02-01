@@ -33,7 +33,7 @@ export const useAnimator = (selectedAlgorithm, inputData, target, arraySize, spe
 
     setIsAnimating(true);
     isAnimatingRef.current = true;
-    
+
     const algorithmGenerator = selectedAlgorithm.algorithm(
       data.map(d => d.value),
       target,
@@ -54,7 +54,12 @@ export const useAnimator = (selectedAlgorithm, inputData, target, arraySize, spe
           if (!done && result.value) {
             step++;
             const state = result.value;
-            
+
+            // Check if this is a completion state
+            const isCompletionState = state.type === 'found' ||
+              state.type === 'complete' ||
+              state.type === 'complete-not-found';
+
             // Update data if array changed
             if (state.array) {
               setData(state.array.map((value, index) => ({
@@ -77,7 +82,8 @@ export const useAnimator = (selectedAlgorithm, inputData, target, arraySize, spe
               right: state.right,
               mid: state.mid,
               pointer: state.activeIndex !== undefined ? state.activeIndex : state.mid,
-              pointerLabel: state.pointerLabel || 'Current'
+              pointerLabel: state.pointerLabel || 'Current',
+              isComplete: isCompletionState
             };
 
             setCurrentState(newState);
@@ -96,8 +102,18 @@ export const useAnimator = (selectedAlgorithm, inputData, target, arraySize, spe
             }
             if (callbacks.onProgressChange) {
               // Calculate progress (simplified)
-              const progress = Math.min((step / (data.length * 2)) * 100, 100);
+              const progress = isCompletionState ? 100 : Math.min((step / (data.length * 2)) * 100, 100);
               callbacks.onProgressChange(progress);
+            }
+
+            // If this is a completion state, stop the animation AFTER displaying the state
+            if (isCompletionState) {
+              // Wait a bit to show the completion state before stopping
+              await new Promise(resolve => setTimeout(resolve, 500));
+              setIsAnimating(false);
+              isAnimatingRef.current = false;
+              if (callbacks.onProgressChange) callbacks.onProgressChange(100);
+              break; // Exit the loop after showing completion
             }
           }
 

@@ -3,17 +3,16 @@ export const binarySearch = async function* (array, target, delay) {
   let comparisons = 0;
   let left = 0;
   let right = array.length - 1;
-  let foundIndex = -1;
 
   // Check if array is sorted
   const isSorted = array.every((val, i, arr) => i === 0 || arr[i - 1] <= val);
-  
+
   // If not sorted, sort it first with visual feedback
   let sortedArray = [...array];
   if (!isSorted) {
     yield {
       type: 'sorting-notice',
-      explanation: 'Array must be sorted for binary search. Sorting array...',
+      explanation: `⚠️ Binary Search needs a sorted array. Let's sort it first...`,
       array: [...sortedArray],
       comparisons,
       line: 1
@@ -27,7 +26,7 @@ export const binarySearch = async function* (array, target, delay) {
         yield {
           type: 'sort-compare',
           comparingIndices: [j, j + 1],
-          explanation: `Comparing ${sortedArray[j]} and ${sortedArray[j + 1]} for sorting`,
+          explanation: `Sorting: Comparing ${sortedArray[j]} and ${sortedArray[j + 1]}`,
           array: [...sortedArray],
           comparisons,
           line: 2
@@ -39,7 +38,7 @@ export const binarySearch = async function* (array, target, delay) {
           yield {
             type: 'sort-swap',
             swappedIndices: [j, j + 1],
-            explanation: `Swapping ${sortedArray[j + 1]} and ${sortedArray[j]}`,
+            explanation: `Sorting: Swapping ${sortedArray[j + 1]} and ${sortedArray[j]}`,
             array: [...sortedArray],
             comparisons,
             line: 3
@@ -51,7 +50,7 @@ export const binarySearch = async function* (array, target, delay) {
 
     yield {
       type: 'sorted',
-      explanation: 'Array is now sorted. Starting binary search...',
+      explanation: `✅ Array sorted! Now starting Binary Search for ${targetNum}...`,
       array: [...sortedArray],
       sortedIndices: Array.from({ length: sortedArray.length }, (_, i) => i),
       comparisons,
@@ -63,7 +62,7 @@ export const binarySearch = async function* (array, target, delay) {
 
   yield {
     type: 'init',
-    explanation: `Starting binary search for ${targetNum} in sorted array.`,
+    explanation: `🔍 Binary Search: Looking for ${targetNum}. We'll check the middle and eliminate half the array each time.`,
     left,
     right,
     array: [...sortedArray],
@@ -81,7 +80,7 @@ export const binarySearch = async function* (array, target, delay) {
       left,
       right,
       mid,
-      explanation: `Calculating middle index: (${left} + ${right}) / 2 = ${mid}`,
+      explanation: `Finding middle position: (${left} + ${right}) ÷ 2 = ${mid}`,
       array: [...sortedArray],
       comparisons,
       line: 8
@@ -94,7 +93,7 @@ export const binarySearch = async function* (array, target, delay) {
       left,
       right,
       mid,
-      explanation: `Comparing element at index ${mid} (${sortedArray[mid]}) with target ${targetNum}`,
+      explanation: `Checking middle position ${mid}: Is ${sortedArray[mid]} equal to ${targetNum}?`,
       array: [...sortedArray],
       comparisons,
       line: 9
@@ -102,16 +101,17 @@ export const binarySearch = async function* (array, target, delay) {
     await delay();
 
     if (sortedArray[mid] === targetNum) {
-      foundIndex = mid;
+      // Found the target - STOP immediately
       yield {
         type: 'found',
         foundIndex: mid,
-        explanation: `Found target ${targetNum} at index ${mid}!`,
+        explanation: `✅ Success! Found ${targetNum} at position ${mid}. Binary search complete in ${comparisons} comparison${comparisons > 1 ? 's' : ''}.`,
         array: [...sortedArray],
         comparisons,
         line: 10
       };
       await delay();
+      // Return immediately to stop the generator
       return { foundIndex: mid, comparisons };
     }
 
@@ -126,7 +126,7 @@ export const binarySearch = async function* (array, target, delay) {
         mid,
         eliminatedIndices,
         eliminatedRange: [0, mid],
-        explanation: `${sortedArray[mid]} < ${targetNum}, searching in right half (indices ${left} to ${right})`,
+        explanation: `${sortedArray[mid]} < ${targetNum}, so ${targetNum} must be in the right half. Searching positions ${left} to ${right}...`,
         array: [...sortedArray],
         comparisons,
         line: 12
@@ -142,19 +142,20 @@ export const binarySearch = async function* (array, target, delay) {
         mid,
         eliminatedIndices,
         eliminatedRange: [mid, sortedArray.length - 1],
-        explanation: `${sortedArray[mid]} > ${targetNum}, searching in left half (indices ${left} to ${right})`,
+        explanation: `${sortedArray[mid]} > ${targetNum}, so ${targetNum} must be in the left half. Searching positions ${left} to ${right}...`,
         array: [...sortedArray],
         comparisons,
         line: 14
       };
     }
-    
+
     await delay();
   }
 
+  // Not found after eliminating all possibilities
   yield {
-    type: 'not-found',
-    explanation: `Target ${targetNum} not found in the array.`,
+    type: 'complete-not-found',
+    explanation: `❌ Search Complete: ${targetNum} is not in the array. Checked ${comparisons} position${comparisons > 1 ? 's' : ''}.`,
     array: [...sortedArray],
     comparisons,
     line: 17

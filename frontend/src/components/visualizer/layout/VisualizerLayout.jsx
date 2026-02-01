@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import ControlPanel from './ControlPanel';
-import StatsPanel from './StatsPanel';
 import CodePanel from './CodePanel';
 import VisualizationCanvas from '../canvas/VisualizationCanvas';
 import '../styles/visualizer.css';
-import { ChevronDown, ChevronRight, Code2, X } from 'lucide-react';
+import '../styles/graphs.css';
+import '../styles/trees.css';
+import '../styles/dp.css';
+import { ChevronDown, ChevronRight, Code2, Clock } from 'lucide-react';
 
 const VisualizerLayout = ({
   categories,
@@ -34,8 +36,8 @@ const VisualizerLayout = ({
   const [highlightedLine, setHighlightedLine] = useState(null);
   const [progress, setProgress] = useState(0);
   const [expandedCategories, setExpandedCategories] = useState({});
-  const [statsCollapsed, setStatsCollapsed] = useState(false);
   const [codeVisible, setCodeVisible] = useState(false);
+  const [complexityVisible, setComplexityVisible] = useState(false);
 
   const currentCategory = categories[selectedCategory];
 
@@ -48,7 +50,7 @@ const VisualizerLayout = ({
 
   return (
     <div className="visualizer-container-new">
-      {/* Left Sidebar - Fixed, Narrow, Clean */}
+      {/* Left Sidebar */}
       <aside className="visualizer-sidebar-new">
         <div className="sidebar-header-new">
           <h2 className="sidebar-title-new">Algorithms</h2>
@@ -57,7 +59,7 @@ const VisualizerLayout = ({
           {Object.entries(categories).map(([key, category]) => {
             const isExpanded = expandedCategories[key] || selectedCategory === key;
             const isActive = selectedCategory === key;
-            
+
             return (
               <div key={key} className="category-group">
                 <button
@@ -104,7 +106,7 @@ const VisualizerLayout = ({
 
       {/* Main Content Area */}
       <main className="visualizer-main-new">
-        {/* Top Control Card - Single Horizontal Card */}
+        {/* Top Control Card */}
         <ControlPanel
           selectedAlgorithm={selectedAlgorithm}
           isPlaying={isPlaying}
@@ -137,21 +139,34 @@ const VisualizerLayout = ({
           />
         </div>
 
-        {/* Step Explanation - Below Visualization */}
+        {/* Step Explanation */}
         <div className="explanation-section">
           <div className="explanation-content-new">
             {explanation}
           </div>
         </div>
 
-        {/* Code Panel Toggle */}
+        {/* Code and Complexity Toggle Buttons */}
         <div className="code-toggle-section">
           <button
             className="code-toggle-btn"
-            onClick={() => setCodeVisible(!codeVisible)}
+            onClick={() => {
+              setCodeVisible(!codeVisible);
+              if (!codeVisible) setComplexityVisible(false);
+            }}
           >
             <Code2 size={16} />
             {codeVisible ? 'Hide Code' : 'Show Code'}
+          </button>
+          <button
+            className="complexity-toggle-btn"
+            onClick={() => {
+              setComplexityVisible(!complexityVisible);
+              if (!complexityVisible) setCodeVisible(false);
+            }}
+          >
+            <Clock size={16} />
+            {complexityVisible ? 'Hide Complexity' : 'Time & Space Complexity'}
           </button>
         </div>
 
@@ -163,20 +178,31 @@ const VisualizerLayout = ({
             onClose={() => setCodeVisible(false)}
           />
         )}
-      </main>
 
-      {/* Right Info Panel - Collapsible */}
-      <aside className={`visualizer-rightbar-new ${statsCollapsed ? 'collapsed' : ''}`}>
-        <button
-          className="stats-toggle-btn"
-          onClick={() => setStatsCollapsed(!statsCollapsed)}
-        >
-          {statsCollapsed ? <ChevronRight size={18} /> : <X size={18} />}
-        </button>
-        {!statsCollapsed && (
-          <StatsPanel stats={stats} />
+        {/* Complexity Panel - Collapsible */}
+        {complexityVisible && (
+          <div className="complexity-panel-new">
+            <div className="complexity-content-new">
+              <div className="complexity-item-new">
+                <div className="complexity-label-new">Time Complexity</div>
+                <div className="complexity-value-new">{stats.timeComplexity}</div>
+              </div>
+              <div className="complexity-item-new">
+                <div className="complexity-label-new">Space Complexity</div>
+                <div className="complexity-value-new">{stats.spaceComplexity}</div>
+              </div>
+              <div className="complexity-item-new">
+                <div className="complexity-label-new">Comparisons</div>
+                <div className="complexity-value-new">{stats.comparisons}</div>
+              </div>
+              <div className="complexity-item-new">
+                <div className="complexity-label-new">Swaps</div>
+                <div className="complexity-value-new">{stats.swaps}</div>
+              </div>
+            </div>
+          </div>
         )}
-      </aside>
+      </main>
     </div>
   );
 };

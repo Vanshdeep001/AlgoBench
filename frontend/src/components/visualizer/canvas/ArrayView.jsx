@@ -13,7 +13,13 @@ const ArrayView = ({ data, currentState, target, onElementClick }) => {
 
   const getElementClass = (index) => {
     const classes = ['array-card'];
-    
+
+    // If algorithm is complete or all sorted, show all elements as found (green)
+    if (currentState?.isComplete || currentState?.type === 'complete' || currentState?.type === 'all-sorted') {
+      classes.push('found');
+      return classes.join(' ');
+    }
+
     // Priority order for states
     if (currentState?.foundIndex === index) {
       classes.push('found');
@@ -26,12 +32,12 @@ const ArrayView = ({ data, currentState, target, onElementClick }) => {
     } else if (currentState?.sortedIndices?.includes(index)) {
       classes.push('sorted');
     }
-    
+
     // Eliminated range (for binary search)
     if (currentState?.eliminatedIndices?.includes(index)) {
       classes.push('eliminated');
     }
-    
+
     if (hoveredIndex === index) {
       classes.push('hovered');
     }
@@ -48,9 +54,9 @@ const ArrayView = ({ data, currentState, target, onElementClick }) => {
     <div className="array-view-new">
       <div className="array-container-new">
         {data.map((element, index) => {
-          const isInEliminatedRange = currentState?.eliminatedRange && 
+          const isInEliminatedRange = currentState?.eliminatedRange &&
             (index < currentState.eliminatedRange[0] || index > currentState.eliminatedRange[1]);
-          
+
           return (
             <div
               key={index}
@@ -63,7 +69,7 @@ const ArrayView = ({ data, currentState, target, onElementClick }) => {
                   <div className="pointer-line"></div>
                 </div>
               )}
-              
+
               {/* Mid Pointer */}
               {midPointer === index && (
                 <div className="pointer mid-pointer">
@@ -71,7 +77,7 @@ const ArrayView = ({ data, currentState, target, onElementClick }) => {
                   <div className="pointer-line"></div>
                 </div>
               )}
-              
+
               {/* Right Pointer */}
               {rightPointer === index && (
                 <div className="pointer right-pointer">
@@ -90,7 +96,7 @@ const ArrayView = ({ data, currentState, target, onElementClick }) => {
               >
                 <div className="card-value">{element.value}</div>
               </div>
-              
+
               {/* Index Label */}
               <div className="card-index">{index}</div>
             </div>

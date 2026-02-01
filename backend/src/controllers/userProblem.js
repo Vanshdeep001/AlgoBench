@@ -255,13 +255,35 @@ const getAllProblem = async (req, res) => {
 
   try {
 
-    const getProblem = await Problem.find({}).select('_id title difficulty tags');
+    const problems = await Problem.find({}).select('_id title difficulty tags');
 
-    if (getProblem.length == 0)
+    if (problems.length == 0)
       return res.status(404).send("Problem is Missing");
 
+    // Calculate acceptance rate for each problem
+    const problemsWithStats = await Promise.all(
+      problems.map(async (problem) => {
+        const totalSubmissions = await Submission.countDocuments({
+          problemId: problem._id
+        });
 
-    res.status(200).send(getProblem);
+        const acceptedSubmissions = await Submission.countDocuments({
+          problemId: problem._id,
+          status: 'accepted'
+        });
+
+        const acceptanceRate = totalSubmissions > 0
+          ? ((acceptedSubmissions / totalSubmissions) * 100).toFixed(1)
+          : '0.0';
+
+        return {
+          ...problem.toObject(),
+          acceptanceRate: parseFloat(acceptanceRate)
+        };
+      })
+    );
+
+    res.status(200).send(problemsWithStats);
   }
   catch (err) {
     res.status(500).send("Error: " + err);

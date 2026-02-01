@@ -9,6 +9,9 @@ const problemRouter = require("./routes/problemCreator");
 const submitRouter = require("./routes/submit")
 const aiRouter = require("./routes/aiChatting")
 const videoRouter = require("./routes/videoCreator");
+const userProfileRouter = require("./routes/userProfile");
+const userHeatmapRouter = require("./routes/userHeatmap");
+const userAcceptanceRouter = require("./routes/userAcceptance");
 const cors = require('cors')
 
 // console.log("Hello")
@@ -22,6 +25,9 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/user', authRouter);
+app.use('/user', userProfileRouter);
+app.use('/user', userHeatmapRouter);
+app.use('/user', userAcceptanceRouter);
 app.use('/problem', problemRouter);
 app.use('/submission', submitRouter);
 app.use('/ai', aiRouter);

@@ -160,7 +160,7 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Features Grid */}
+            {/* Features Gri d */}
             <section id="features" className="py-24 relative z-10">
                 <div className="container mx-auto px-4">
                     <div className="text-center max-w-3xl mx-auto mb-16">
@@ -197,7 +197,7 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* How It Works Section */}
+            {/* How It Works Sectio n */}
             <section id="how-it-works" className="py-24 relative z-10">
                 <div className="container mx-auto px-4">
                     <div className="text-center max-w-3xl mx-auto mb-16">
@@ -229,7 +229,7 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* CTA Section */}
+            {/* CTA Sectio n */}
             <section className="py-24 px-4">
                 <div className="container mx-auto max-w-5xl">
                     <div className="relative rounded-[2.5rem] overflow-hidden p-8 md:p-24 text-center" style={{ backgroundColor: 'rgba(212, 175, 55, 0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -253,7 +253,7 @@ const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Footer */}
+            {/* Foote r */}
             <footer className="py-12 text-sm" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', backgroundColor: '#0B0B0E', color: '#9A9A9A' }}>
                 <div className="container mx-auto px-4">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8">

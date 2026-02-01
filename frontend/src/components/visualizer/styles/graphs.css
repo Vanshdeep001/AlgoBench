@@ -1,0 +1,119 @@
+/* Graph Visualization Styles */
+.graph-view-container {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(30, 30, 35, 0.8) 0%, rgba(11, 11, 14, 0.95) 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: grab;
+    position: relative;
+}
+
+.graph-view-container:active {
+    cursor: grabbing;
+}
+
+.graph-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Nodes */
+.graph-node {
+    fill: #1e1e24;
+    /* Dark background */
+    stroke: #D4AF37;
+    /* Gold border */
+    stroke-width: 2px;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+.graph-node:hover {
+    fill: rgba(212, 175, 55, 0.1);
+    stroke-width: 3px;
+    cursor: pointer;
+}
+
+.graph-node.active {
+    fill: #D4AF37;
+    stroke: #fff;
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.6));
+    animation: pulseNode 1.5s infinite;
+}
+
+.graph-node.visited {
+    fill: rgba(99, 102, 241, 0.2);
+    stroke: #6366f1;
+    /* Indigo */
+}
+
+.graph-node.path {
+    fill: #10b981;
+    /* Green */
+    stroke: #fff;
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
+}
+
+.graph-node.start {
+    fill: #3b82f6;
+    /* Blue */
+    stroke: #fff;
+}
+
+.graph-node.target {
+    fill: #ef4444;
+    /* Red */
+    stroke: #fff;
+}
+
+.node-text {
+    fill: #EDEDED;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    pointer-events: none;
+    user-select: none;
+}
+
+.graph-node.active+.node-text {
+    fill: #0B0B0E;
+    /* Dark text on gold active node */
+}
+
+.graph-node.path+.node-text {
+    fill: #fff;
+}
+
+/* Edges */
+.graph-edge {
+    stroke: rgba(212, 175, 55, 0.2);
+    stroke-width: 2px;
+    transition: all 0.5s ease;
+}
+
+.graph-edge.active {
+    stroke: #D4AF37;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.4));
+}
+
+.graph-edge.path {
+    stroke: #10b981;
+    stroke-width: 4px;
+}
+
+@keyframes pulseNode {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
