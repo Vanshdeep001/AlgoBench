@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Home, RefreshCw, Zap,Video } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, RefreshCw, Zap, Video, Trophy } from 'lucide-react';
 import { NavLink } from 'react-router';
 
 function Admin() {
@@ -41,6 +41,15 @@ function Admin() {
       color: 'btn-success',
       bgColor: 'bg-success/10',
       route: '/admin/video'
+    },
+    {
+      id: 'contests',
+      title: 'Manage Contests',
+      description: 'Create contests, add problems, set schedule and publish',
+      icon: Trophy,
+      color: 'btn-primary',
+      bgColor: 'bg-primary/10',
+      route: '/admin/contests'
     }
   ];
 

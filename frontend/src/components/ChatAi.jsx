@@ -39,7 +39,18 @@ function ChatAi({ problem }) {
             }]);
         } catch (error) {
             console.error("AI Chat Error:", error);
-            const errorMessage = error.response?.data?.message || error.message || "I'm having trouble connecting right now. Please try again.";
+            const status = error.response?.status;
+            const data = error.response?.data;
+            let errorMessage = "I'm having trouble connecting right now. Please try again.";
+            if (status === 401) {
+                errorMessage = "Please log in to use the AI assistant.";
+            } else if (status === 429) {
+                errorMessage = data?.message || "Too many requests. Please wait a minute and try again.";
+            } else if (data) {
+                errorMessage = typeof data === "string" ? data : (data.message || errorMessage);
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
             setMessages(prev => [...prev, {
                 role: 'model',
                 parts: [{ text: `⚠️ ${errorMessage}` }]

@@ -27,12 +27,6 @@ function Login() {
   } = useForm({ resolver: zodResolver(loginSchema) });
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
-    }
-  }, [isAuthenticated, navigate]);
-
-  useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
@@ -48,8 +42,11 @@ function Login() {
     }
   }, [mobileMenuOpen]);
 
-  const onSubmit = (data) => {
-    dispatch(loginUser(data));
+  const onSubmit = async (data) => {
+    const result = await dispatch(loginUser(data));
+    if (loginUser.fulfilled.match(result)) {
+      navigate('/problems');
+    }
   };
 
   return (

@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import Editor from '@monaco-editor/react';
 import { useParams } from 'react-router';
+import { useSelector } from 'react-redux';
 import axiosClient from "../utils/axiosClient"
 import SubmissionHistory from "../components/SubmissionHistory"
 import ChatAi from '../components/ChatAi';
 import Editorial from '../components/Editorial';
+import ProblemDiscussion from '../features/community/pages/ProblemDiscussion';
 import { Code, Play, Send, CheckCircle, XCircle, Clock, Database } from 'lucide-react';
 
 const langMap = {
@@ -16,6 +18,7 @@ const langMap = {
 
 
 const ProblemPage = () => {
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [problem, setProblem] = useState(null);
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
   const [code, setCode] = useState('');
@@ -178,7 +181,7 @@ const ProblemPage = () => {
           background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(15, 15, 20, 0.98) 100%)',
           borderBottom: '1px solid rgba(212, 175, 55, 0.1)'
         }}>
-          {['description', 'editorial', 'solutions', 'submissions', 'chatAI'].map((tab) => (
+          {['description', 'editorial', 'solutions', 'submissions', 'discussion', 'chatAI'].map((tab) => (
             <button
               key={tab}
               className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
@@ -201,7 +204,7 @@ const ProblemPage = () => {
                 }
               }}
             >
-              {tab === 'chatAI' ? 'Chat AI' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'chatAI' ? 'Chat AI' : tab === 'discussion' ? 'Discussion' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
@@ -320,6 +323,15 @@ const ProblemPage = () => {
                     <SubmissionHistory problemId={problemId} />
                   </div>
                 </div>
+              )}
+
+              {activeLeftTab === 'discussion' && (
+                <ProblemDiscussion
+                  problemId={problemId}
+                  problemTitle={problem?.title}
+                  isAuthenticated={!!isAuthenticated}
+                  currentUserId={user?._id}
+                />
               )}
 
               {activeLeftTab === 'chatAI' && (
