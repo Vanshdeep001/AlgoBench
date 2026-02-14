@@ -9,7 +9,7 @@ const Problem = require('../models/problem');
  */
 const getUserStats = async (req, res) => {
     try {
-        const userId = req.userId; // Set by userMiddleware
+        const userId = req.result._id;
 
         console.log('=== Fetching User Stats ===');
         console.log('User ID:', userId);

@@ -1,0 +1,60 @@
+{
+  "title": "Linear Search",
+  "description": "Write a program that reads from stdin:\n- First line: integer n (array size)\n- Second line: n space-separated integers\n- Third line: integer target\n\nPrint the 0-based index of target in the array, or -1 if not found.",
+  "difficulty": "easy",
+  "tags": "array",
+  "visibleTestCases": [
+    {
+      "input": "5\n1 3 5 7 9\n5",
+      "output": "2",
+      "explanation": "Target 5 is at index 2."
+    },
+    {
+      "input": "4\n10 20 30 40\n25",
+      "output": "-1",
+      "explanation": "25 is not in the array."
+    }
+  ],
+  "hiddenTestCases": [
+    {
+      "input": "6\n2 4 6 8 10 12\n8",
+      "output": "3"
+    },
+    {
+      "input": "3\n5 5 5\n5",
+      "output": "0"
+    }
+  ],
+  "constraints": [
+    "1 <= n <= 10^5",
+    "-10^9 <= array values and target <= 10^9"
+  ],
+  "startCode": [
+    {
+      "language": "C++",
+      "initialCode": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    cin >> n;\n    int arr[100000];\n    for (int i = 0; i < n; i++) cin >> arr[i];\n    int target;\n    cin >> target;\n    // Your code here\n    return 0;\n}"
+    },
+    {
+      "language": "Java",
+      "initialCode": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int n = sc.nextInt();\n        int[] arr = new int[n];\n        for (int i = 0; i < n; i++) arr[i] = sc.nextInt();\n        int target = sc.nextInt();\n        // Your code here\n    }\n}"
+    },
+    {
+      "language": "JavaScript",
+      "initialCode": "const input = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nconst n = Number(input[0]);\nconst arr = input[1].split(' ').map(Number);\nconst target = Number(input[2]);\n// Your code here"
+    }
+  ],
+  "referenceSolution": [
+    {
+      "language": "C++",
+      "completeCode": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int n;\n    cin >> n;\n    int arr[100000];\n    for (int i = 0; i < n; i++) cin >> arr[i];\n    int target;\n    cin >> target;\n    for (int i = 0; i < n; i++) {\n        if (arr[i] == target) {\n            cout << i;\n            return 0;\n        }\n    }\n    cout << -1;\n    return 0;\n}"
+    },
+    {
+      "language": "Java",
+      "completeCode": "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        int n = sc.nextInt();\n        int[] arr = new int[n];\n        for (int i = 0; i < n; i++) arr[i] = sc.nextInt();\n        int target = sc.nextInt();\n        for (int i = 0; i < n; i++) {\n            if (arr[i] == target) {\n                System.out.println(i);\n                return;\n            }\n        }\n        System.out.println(-1);\n    }\n}"
+    },
+    {
+      "language": "JavaScript",
+      "completeCode": "const input = require('fs').readFileSync(0, 'utf-8').trim().split('\\n');\nconst n = Number(input[0]);\nconst arr = input[1].split(' ').map(Number);\nconst target = Number(input[2]);\nlet idx = -1;\nfor (let i = 0; i < n; i++) {\n    if (arr[i] === target) { idx = i; break; }\n}\nconsole.log(idx);"
+    }
+  ]
+}

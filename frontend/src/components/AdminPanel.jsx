@@ -1,8 +1,57 @@
+import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axiosClient from '../utils/axiosClient';
 import { useNavigate } from 'react-router';
+
+const VALID_TAGS = ['array', 'linkedList', 'graph', 'dp'];
+
+/** Normalize imported JSON to form shape. Tags must be one of VALID_TAGS. */
+function normalizeImportedProblem(json) {
+  let tags = (json.tags || 'array').toString().trim();
+  const firstWord = tags.split(/[\s,]+/)[0]?.toLowerCase();
+  if (VALID_TAGS.includes(firstWord)) tags = firstWord;
+  else tags = 'array';
+
+  const visibleTestCases = (json.visibleTestCases || []).map((tc) => ({
+    input: tc.input ?? '',
+    output: tc.output ?? '',
+    explanation: tc.explanation ?? ''
+  }));
+
+  const hiddenTestCases = (json.hiddenTestCases || []).map((tc) => ({
+    input: tc.input ?? '',
+    output: tc.output ?? ''
+  }));
+
+  const startCode = (json.startCode || []).slice(0, 3);
+  while (startCode.length < 3) {
+    const lang = ['C++', 'Java', 'JavaScript'][startCode.length];
+    startCode.push({ language: lang, initialCode: '' });
+  }
+  const refSol = (json.referenceSolution || []).slice(0, 3);
+  while (refSol.length < 3) {
+    const lang = ['C++', 'Java', 'JavaScript'][refSol.length];
+    refSol.push({ language: lang, completeCode: '' });
+  }
+
+  let description = json.description ?? '';
+  if (json.constraints && Array.isArray(json.constraints) && json.constraints.length > 0) {
+    description += '\n\n**Constraints:**\n' + json.constraints.map((c) => '- ' + c).join('\n');
+  }
+
+  return {
+    title: json.title ?? '',
+    description,
+    difficulty: ['easy', 'medium', 'hard'].includes(json.difficulty) ? json.difficulty : 'easy',
+    tags,
+    visibleTestCases: visibleTestCases.length ? visibleTestCases : [{ input: '', output: '', explanation: '' }],
+    hiddenTestCases: hiddenTestCases.length ? hiddenTestCases : [{ input: '', output: '' }],
+    startCode,
+    referenceSolution: refSol
+  };
+}
 
 // Zod schema matching the problem schema
 const problemSchema = z.object({
@@ -39,10 +88,15 @@ const problemSchema = z.object({
 
 function AdminPanel() {
   const navigate = useNavigate();
+  const [importJson, setImportJson] = useState('');
+  const [importError, setImportError] = useState('');
+  const [skipReferenceValidation, setSkipReferenceValidation] = useState(true);
+
   const {
     register,
     control,
     handleSubmit,
+    setValue,
     formState: { errors }
   } = useForm({
     resolver: zodResolver(problemSchema),
@@ -63,7 +117,8 @@ function AdminPanel() {
   const {
     fields: visibleFields,
     append: appendVisible,
-    remove: removeVisible
+    remove: removeVisible,
+    replace: replaceVisible
   } = useFieldArray({
     control,
     name: 'visibleTestCases'
@@ -72,25 +127,73 @@ function AdminPanel() {
   const {
     fields: hiddenFields,
     append: appendHidden,
-    remove: removeHidden
+    remove: removeHidden,
+    replace: replaceHidden
   } = useFieldArray({
     control,
     name: 'hiddenTestCases'
   });
 
+  const handleImportJson = () => {
+    setImportError('');
+    try {
+      const parsed = JSON.parse(importJson);
+      const data = normalizeImportedProblem(parsed);
+      setValue('title', data.title);
+      setValue('description', data.description);
+      setValue('difficulty', data.difficulty);
+      setValue('tags', data.tags);
+      replaceVisible(data.visibleTestCases);
+      replaceHidden(data.hiddenTestCases);
+      setValue('startCode', data.startCode);
+      setValue('referenceSolution', data.referenceSolution);
+      setImportJson('');
+    } catch (e) {
+      setImportError(e.message || 'Invalid JSON');
+    }
+  };
+
   const onSubmit = async (data) => {
     try {
-      await axiosClient.post('/problem/create', data);
+      await axiosClient.post('/problem/create', {
+        ...data,
+        skipReferenceValidation: !!skipReferenceValidation
+      });
       alert('Problem created successfully!');
       navigate('/');
     } catch (error) {
-      alert(`Error: ${error.response?.data?.message || error.message}`);
+      const res = error.response;
+      const status = res?.status;
+      let message = error.message;
+      if (res?.data) {
+        if (typeof res.data === 'string') message = res.data;
+        else message = res.data.message || res.data.error || JSON.stringify(res.data);
+      }
+      if (status === 401) message = 'Session expired or you are not authorized. Please log in again as admin.';
+      alert(`Error${status ? ` (${status})` : ''}: ${message}`);
     }
   };
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Create New Problem</h1>
+
+      {/* Import from JSON */}
+      <div className="card bg-base-100 shadow-lg p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-3">Import from JSON</h2>
+        <p className="text-sm text-base-content/70 mb-2">Paste a problem JSON below to fill the form. Tags like &quot;array, searching&quot; are normalized to a single valid tag (e.g. array).</p>
+        <p className="text-sm text-amber-600 dark:text-amber-400 mb-3 font-medium">Required format: test <strong>input</strong> must be plain text for stdin (e.g. first line: n, second: space-separated numbers, third: target). <strong>Reference solution</strong> must be a full program with <code>main()</code> / <code>readFileSync(0)</code> that reads stdin and prints the result. Use the sample at <code>/linear-search-problem.json</code> as reference.</p>
+        <textarea
+          value={importJson}
+          onChange={(e) => setImportJson(e.target.value)}
+          placeholder='{"title": "Linear Search", "description": "...", ...}'
+          className="textarea textarea-bordered w-full font-mono text-sm min-h-[120px]"
+        />
+        {importError && <p className="text-error text-sm mt-2">{importError}</p>}
+        <button type="button" onClick={handleImportJson} className="btn btn-primary btn-sm mt-3">
+          Load into form
+        </button>
+      </div>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Basic Information */}
@@ -286,6 +389,19 @@ function AdminPanel() {
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="form-control bg-base-200/50 rounded-lg p-4 border-2 border-primary/20">
+          <label className="label cursor-pointer justify-start gap-3">
+            <input
+              type="checkbox"
+              checked={skipReferenceValidation}
+              onChange={(e) => setSkipReferenceValidation(e.target.checked)}
+              className="checkbox checkbox-primary checkbox-lg"
+            />
+            <span className="label-text font-semibold">Skip reference solution validation (recommended)</span>
+          </label>
+          <p className="text-sm text-base-content/70 ml-8 mt-1">Keep this checked to create the problem without calling Judge0. Uncheck only if you have a working Judge0/RapidAPI subscription and want to validate solutions before saving. If you see 400 or 403 errors, leave it checked.</p>
         </div>
 
         <button type="submit" className="btn btn-primary w-full">

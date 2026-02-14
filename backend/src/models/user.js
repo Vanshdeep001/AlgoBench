@@ -38,6 +38,11 @@ const userSchema = new Schema({
         }],
         default: []
     },
+    reputation: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
     password: {
         type: String,
         required: true

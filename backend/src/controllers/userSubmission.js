@@ -49,11 +49,8 @@ const submitCode = async (req,res)=>{
 
     
     const submitResult = await submitBatch(submissions);
-    
-    const resultToken = submitResult.map((value)=> value.token);
-
+    const resultToken = submitResult.map((value) => value.token);
     const testResult = await submitToken(resultToken);
-    
 
     // submittedResult ko update karo
     let testCasesPassed = 0;
@@ -146,9 +143,7 @@ const runCode = async(req,res)=>{
 
 
    const submitResult = await submitBatch(submissions);
-   
-   const resultToken = submitResult.map((value)=> value.token);
-
+   const resultToken = submitResult.map((value) => value.token);
    const testResult = await submitToken(resultToken);
 
     let testCasesPassed = 0;

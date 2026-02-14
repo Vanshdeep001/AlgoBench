@@ -94,9 +94,11 @@ const ProblemPage = () => {
 
     } catch (error) {
       console.error('Error running code:', error);
+      const msg = error.response?.data?.message || error.response?.data?.error || error.message || 'Run failed. Compiler may be unavailable.';
       setRunResult({
         success: false,
-        error: 'Internal server error'
+        error: msg,
+        testCases: []
       });
       setLoading(false);
       setActiveRightTab('testcase');
@@ -119,7 +121,8 @@ const ProblemPage = () => {
 
     } catch (error) {
       console.error('Error submitting code:', error);
-      setSubmitResult(null);
+      const msg = error.response?.data?.message || error.response?.data?.error || error.message || 'Submission failed.';
+      setSubmitResult({ accepted: false, error: msg, passedTestCases: 0, totalTestCases: 0 });
       setLoading(false);
       setActiveRightTab('result');
     }
@@ -586,7 +589,7 @@ const ProblemPage = () => {
                         </div>
 
                         <div className="mt-4 space-y-2">
-                          {runResult.testCases.map((tc, i) => (
+                          {(runResult.testCases || []).map((tc, i) => (
                             <div
                               key={i}
                               className="p-3 rounded text-xs"
@@ -614,7 +617,7 @@ const ProblemPage = () => {
                           <h4 className="font-bold text-lg" style={{ color: '#ef4444' }}>Error</h4>
                         </div>
                         <div className="mt-4 space-y-2">
-                          {runResult.testCases.map((tc, i) => (
+                          {(runResult.testCases || []).map((tc, i) => (
                             <div
                               key={i}
                               className="p-3 rounded text-xs"

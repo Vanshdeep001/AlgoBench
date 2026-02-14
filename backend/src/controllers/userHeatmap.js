@@ -7,7 +7,7 @@ const Submission = require('../models/submission');
  */
 const getUserHeatmap = async (req, res) => {
     try {
-        const userId = req.userId; // Set by userMiddleware
+        const userId = req.result._id;
 
         // Calculate date 365 days ago
         const oneYearAgo = new Date();

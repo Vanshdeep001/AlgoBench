@@ -3,7 +3,7 @@ import { NavLink } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import axiosClient from '../utils/axiosClient';
 import { logoutUser } from '../authSlice';
-import { Code, Search, Trophy, TrendingUp, Target, CheckCircle2, Menu, X, Zap, BookOpen, BarChart3 } from 'lucide-react';
+import { Code, Search, Trophy, TrendingUp, Target, CheckCircle2, Menu, X, BookOpen, Sparkles } from 'lucide-react';
 import UserDropdown from '../components/UserDropdown';
 
 function Homepage() {
@@ -132,27 +132,30 @@ function Homepage() {
       <div className="relative z-10 pt-32 pb-20 px-4">
         <div className="container mx-auto max-w-7xl">
           {/* Header Section */}
-          <div className="mb-12">
-            <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
-              <span className="bg-gradient-to-r bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(to right, #FFFFFF, #D4AF37)' }}>
-                Practice Problems
+          <div className="mb-14">
+            <p className="text-sm font-mono uppercase tracking-[0.2em] mb-3" style={{ color: 'rgba(212, 175, 55, 0.9)' }}>
+              Problem Set
+            </p>
+            <h1 className="text-4xl md:text-6xl font-display font-bold mb-5 tracking-tight">
+              <span className="bg-gradient-to-r bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(120deg, #FFFFFF 0%, #E8E0C8 40%, #D4AF37 100%)' }}>
+                Practice & Progress
               </span>
             </h1>
-            <p className="text-lg font-mono" style={{ color: '#9A9A9A' }}>
-              Master algorithms one problem at a time
+            <p className="text-lg max-w-xl font-mono" style={{ color: '#9A9A9A' }}>
+              Master algorithms one problem at a time. Filter by difficulty, tag, or status and track your progress.
             </p>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <StatsCard icon={<Trophy className="w-6 h-6" style={{ color: '#D4AF37' }} />} label="Problems Solved" value={`${stats.totalSolved}/${stats.totalProblems}`} />
-            <StatsCard icon={<Target className="w-6 h-6" style={{ color: '#B8962E' }} />} label="Completion Rate" value={`${stats.accuracy}%`} />
-            <StatsCard icon={<TrendingUp className="w-6 h-6" style={{ color: '#D4AF37' }} />} label="Keep Going!" value="🔥" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <StatsCard icon={<Trophy className="w-6 h-6" style={{ color: '#D4AF37' }} />} label="Solved" value={`${stats.totalSolved} / ${stats.totalProblems}`} />
+            <StatsCard icon={<Target className="w-6 h-6" style={{ color: '#B8962E' }} />} label="Completion" value={`${stats.accuracy}%`} />
+            <StatsCard icon={<Sparkles className="w-6 h-6" style={{ color: '#D4AF37' }} />} label="Next up" value={stats.totalProblems - stats.totalSolved > 0 ? `${stats.totalProblems - stats.totalSolved} left` : 'All done'} />
           </div>
 
           {/* Search and Filters */}
           <div className="mb-8">
-            {/* Search Bar */}
+            <p className="text-xs font-mono uppercase tracking-wider mb-4" style={{ color: '#9A9A9A' }}>Search & filter</p>
             <div className="relative mb-6">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: '#9A9A9A' }} />
               <input
@@ -260,27 +263,31 @@ function Homepage() {
           </div>
 
           {/* Problems Table */}
-          <div className="rounded-2xl overflow-hidden" style={{
-            background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(15, 15, 20, 0.98) 100%)',
-            border: '1px solid rgba(212, 175, 55, 0.15)',
+          <div className="rounded-2xl overflow-hidden relative" style={{
+            background: 'linear-gradient(165deg, rgba(22, 22, 28, 0.98) 0%, rgba(15, 15, 20, 0.99) 100%)',
+            border: '1px solid rgba(212, 175, 55, 0.12)',
             backdropFilter: 'blur(20px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.03)'
           }}>
+            <div className="absolute top-0 left-0 right-0 h-px rounded-t-2xl" style={{ background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.35), transparent)' }} />
             {filteredProblems.length === 0 ? (
-              <div className="text-center py-20">
-                <BookOpen className="w-16 h-16 mx-auto mb-4" style={{ color: '#9A9A9A' }} />
-                <p className="text-xl font-mono" style={{ color: '#9A9A9A' }}>No problems found</p>
+              <div className="text-center py-24 px-6">
+                <div className="inline-flex p-4 rounded-2xl mb-5" style={{ backgroundColor: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.15)' }}>
+                  <BookOpen className="w-14 h-14" style={{ color: '#9A9A9A' }} />
+                </div>
+                <p className="text-xl font-display font-semibold text-white/90 mb-2">No problems match your filters</p>
+                <p className="text-sm font-mono max-w-sm mx-auto" style={{ color: '#9A9A9A' }}>Try adjusting search or filter criteria to see more problems.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
-                      <th className="text-left px-6 py-4 text-sm font-mono font-semibold" style={{ color: '#9A9A9A' }}>Title</th>
-                      <th className="text-left px-6 py-4 text-sm font-mono font-semibold" style={{ color: '#9A9A9A' }}>Difficulty</th>
-                      <th className="text-left px-6 py-4 text-sm font-mono font-semibold" style={{ color: '#9A9A9A' }}>Tag</th>
-                      <th className="text-left px-6 py-4 text-sm font-mono font-semibold" style={{ color: '#9A9A9A' }}>Acceptance</th>
-                      <th className="text-left px-6 py-4 text-sm font-mono font-semibold" style={{ color: '#9A9A9A' }}>Status</th>
+                    <tr className="border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                      <th className="text-left px-6 py-4 text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#9A9A9A' }}>Title</th>
+                      <th className="text-left px-6 py-4 text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#9A9A9A' }}>Difficulty</th>
+                      <th className="text-left px-6 py-4 text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#9A9A9A' }}>Tag</th>
+                      <th className="text-left px-6 py-4 text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#9A9A9A' }}>Acceptance</th>
+                      <th className="text-left px-6 py-4 text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#9A9A9A' }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -306,28 +313,24 @@ function Homepage() {
 const StatsCard = ({ icon, label, value }) => {
   return (
     <div
-      className="group relative p-6 rounded-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer overflow-hidden"
+      className="group relative p-6 rounded-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
       style={{
-        background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(15, 15, 20, 0.98) 100%)',
-        border: '1px solid rgba(212, 175, 55, 0.15)',
+        background: 'linear-gradient(145deg, rgba(24, 24, 30, 0.95) 0%, rgba(18, 18, 24, 0.98) 100%)',
+        border: '1px solid rgba(212, 175, 55, 0.12)',
         backdropFilter: 'blur(20px)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.02)'
       }}
     >
-      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-        style={{
-          background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(184, 150, 46, 0.05) 100%)',
-          boxShadow: '0 0 40px rgba(212, 175, 55, 0.2)'
-        }}
-      ></div>
+      <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent)' }} />
+      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(212, 175, 55, 0.06), transparent)' }} />
 
       <div className="relative z-10 flex items-center gap-4">
-        <div className="p-3 rounded-xl" style={{ backgroundColor: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
+        <div className="p-3 rounded-xl shrink-0" style={{ backgroundColor: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
           {icon}
         </div>
-        <div>
-          <div className="text-sm font-mono mb-1" style={{ color: '#9A9A9A' }}>{label}</div>
-          <div className="text-2xl font-display font-bold text-white">{value}</div>
+        <div className="min-w-0">
+          <div className="text-xs font-mono uppercase tracking-wider mb-1" style={{ color: '#9A9A9A' }}>{label}</div>
+          <div className="text-xl md:text-2xl font-display font-bold text-white truncate">{value}</div>
         </div>
       </div>
     </div>

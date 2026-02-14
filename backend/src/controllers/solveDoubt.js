@@ -1,179 +1,213 @@
 const axios = require('axios');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 
+// Per-user rate limit: 1 AI request every 20 seconds (avoids burning provider quota)
+const AI_COOLDOWN_MS = 20 * 1000;
+const lastRequestByUser = new Map();
+
+// Google Gemini via @google/genai SDK (model: gemini-3-flash-preview)
+const GEMINI_MODEL = 'gemini-3-flash-preview';
+
+// OpenRouter free models (fallback)
+const OPENROUTER_FREE_MODELS = [
+    'google/gemini-2.0-flash-exp:free',
+    'google/gemma-3-27b-it:free',
+    'meta-llama/llama-3.2-3b-instruct:free',
+];
+
+function getApiError(err) {
+    const data = err.response?.data;
+    if (!data) return err.message;
+    return data.error?.message ?? data.message ?? (typeof data === 'string' ? data : err.message);
+}
+
+function getGeminiKey() {
+    const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+    return key && key !== 'your_gemini_api_key_here' ? key : null;
+}
+
+/** Call Google Gemini API using @google/genai SDK. */
+async function tryGemini(systemContext, mappedMessages) {
+    const apiKey = getGeminiKey();
+    if (!apiKey) return null;
+
+    const { GoogleGenAI } = await import('@google/genai');
+    const ai = new GoogleGenAI({ apiKey });
+
+    // Build contents: array of { role: 'user'|'model', parts: [{ text }] }
+    const contents = mappedMessages.map((msg) => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+    }));
+
+    const response = await ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents,
+        systemInstruction: { parts: [{ text: systemContext }] }
+    });
+
+    const text = response?.text;
+    return text != null && text !== '' ? String(text) : null;
+}
 
 const solveDoubt = async (req, res) => {
-
     try {
-
         const { messages, title, description, testCases, startCode } = req.body;
+
+        // Per-user cooldown so one question doesn't trigger multiple provider calls in a row
+        const userId = req.result?._id?.toString();
+        if (userId) {
+            const now = Date.now();
+            const last = lastRequestByUser.get(userId);
+            if (last != null && (now - last) < AI_COOLDOWN_MS) {
+                return res.status(429).json({
+                    message: 'Please wait a few seconds before sending another message.'
+                });
+            }
+            lastRequestByUser.set(userId, now);
+        }
+
+        const hasGemini = !!getGeminiKey();
+        const hasOpenRouter = !!(process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY !== 'your_openrouter_api_key_here');
 
         console.log('=== AI Chat Debug ===');
         console.log('Messages received:', messages?.length, 'messages');
-        console.log('Has OpenRouter Key:', !!process.env.OPENROUTER_API_KEY);
-        console.log('Has Gemini Key:', !!process.env.GEMINI_KEY);
+        console.log('Has Gemini Key:', hasGemini, '| Has OpenRouter Key:', hasOpenRouter);
 
-        let openRouterSuccess = false;
-
-        // Try OpenRouter first if key is available
-        if (process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY !== 'your_openrouter_api_key_here') {
-            console.log('Attempting OpenRouter API...');
-
-            const systemContext = `You are an expert DSA (Data Structures and Algorithms) tutor helping with this problem:
-
-Title: ${title || 'N/A'}
-Description: ${description || 'N/A'}
-Examples: ${JSON.stringify(testCases) || 'N/A'}
-
-Provide hints, explanations, and guidance focused on this DSA problem. Help the user understand the concepts and approach, but don't give away the complete solution immediately unless asked.`;
-
-            const openRouterMessages = [
-                {
-                    role: 'system',
-                    content: systemContext
-                },
-                ...messages.map(msg => ({
-                    role: msg.role === 'model' ? 'assistant' : 'user',
-                    content: msg.parts[0].text
-                }))
-            ];
-
-            try {
-                const response = await axios.post(
-                    'https://openrouter.ai/api/v1/chat/completions',
-                    {
-                        model: 'meta-llama/llama-3.1-8b-instruct:free',
-                        messages: openRouterMessages
-                    },
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                            'HTTP-Referer': 'http://localhost:3000',
-                            'X-Title': 'AlgoBench AI Tutor',
-                            'Content-Type': 'application/json'
-                        },
-                        timeout: 30000
-                    }
-                );
-
-                const aiMessage = response.data.choices[0].message.content;
-
-                console.log('✅ OpenRouter Response received successfully');
-                return res.status(201).json({
-                    message: aiMessage
-                });
-
-            } catch (openRouterError) {
-                console.error('❌ OpenRouter API Error:', openRouterError.response?.data || openRouterError.message);
-                console.log('⚠️ Falling back to Gemini API...');
-                // Continue to Gemini fallback below
-            }
+        if (!hasGemini && !hasOpenRouter) {
+            return res.status(503).json({
+                message: 'AI is not configured. Set GEMINI_API_KEY (recommended, generous free tier) or OPENROUTER_API_KEY in backend/.env. Gemini: https://aistudio.google.com/apikey | OpenRouter: https://openrouter.ai/keys'
+            });
         }
 
-        // Use Gemini API (either as fallback or primary)
-        console.log('Using Gemini API');
-
-        if (!process.env.GEMINI_KEY) {
-            throw new Error('No working AI API key configured. OpenRouter failed and no Gemini key available.');
-        }
-
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
-
-        // Try different model names (Google keeps changing them)
-        const modelNames = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro', 'gemini-1.0-pro'];
-        let model = null;
-        let lastError = null;
-
-        for (const modelName of modelNames) {
-            try {
-                console.log(`Trying model: ${modelName}`);
-                model = genAI.getGenerativeModel({ model: modelName });
-
-                // Test if model works by trying to generate content
-                const testResult = await model.generateContent('test');
-                await testResult.response;
-
-                console.log(`✅ Successfully using model: ${modelName}`);
-                break;
-            } catch (err) {
-                console.log(`❌ Model ${modelName} failed:`, err.message);
-                lastError = err;
-                model = null;
-            }
-        }
-
-        if (!model) {
-            throw new Error(`All Gemini models failed. Your API key might be invalid or expired. Last error: ${lastError?.message}. Please check your GEMINI_KEY in .env file or get a new key from https://makersuite.google.com/app/apikey`);
-        }
-
-        const systemContext = `You are an expert DSA tutor helping with this problem:
-Title: ${title || 'N/A'}
-Description: ${description || 'N/A'}
-Examples: ${testCases || 'N/A'}
-
-Provide hints, code reviews, and solutions focused on this DSA problem only.`;
-
-        const chatHistory = messages.map(msg => ({
-            role: msg.role === 'model' ? 'model' : 'user',
-            parts: msg.parts
-        }));
-
-        let validHistory = chatHistory;
-        while (validHistory.length > 0 && validHistory[0].role === 'model') {
-            validHistory = validHistory.slice(1);
-        }
-
-        if (validHistory.length === 0) {
+        if (!Array.isArray(messages) || messages.length === 0) {
             return res.status(400).json({
-                message: "No valid messages to process"
+                message: 'No messages to process.'
             });
         }
 
-        if (validHistory.length === 1) {
-            const userMessage = systemContext + "\n\nUser: " + validHistory[0].parts[0].text;
-            const result = await model.generateContent(userMessage);
-            const response = await result.response;
-            const text = response.text();
+        const systemContext = `You are an expert DSA (Data Structures and Algorithms) tutor on AlgoBench. Your role is to help the user with the problem they are currently working on.
 
-            console.log('✅ Gemini Response sent successfully');
-            return res.status(201).json({
-                message: text
+## Strict rules
+- Answer ONLY Data Structures and Algorithms (DSA) questions. If the user asks something off-topic (e.g. general knowledge, other subjects), politely say: "I'm here to help with DSA and this problem only. Please ask about the problem, approach, or code related to it."
+- Always base your answers on the **current problem** below. When replying, reference the problem when relevant (e.g. "For this problem...", "Given the problem statement...").
+
+## Current problem context (use this in every answer when relevant)
+
+**Title:** ${title || 'N/A'}
+
+**Description:**
+${description || 'N/A'}
+
+**Examples / Test cases:**
+${typeof testCases === 'string' ? testCases : JSON.stringify(testCases || [], null, 2)}
+
+**Starter code (if any):**
+${startCode ? (typeof startCode === 'string' ? startCode : JSON.stringify(startCode)) : 'None'}
+
+## How to help
+- When the user asks for a solution, explanation, debug, or optimization, first briefly acknowledge the problem (e.g. "For **${title || 'this problem'}**, ...") then respond.
+- If they ask for debugging or a solution but haven't pasted their code, ask them to paste the code they're working on so you can help. Otherwise use the problem description and examples to guide your answer.
+- Provide hints and explanations focused on DSA (complexity, approach, data structures). You may give the full solution if they explicitly ask for it; otherwise prefer guiding them step by step.
+- Keep answers clear, concise, and relevant to this problem and DSA only.`;
+
+        const mapped = messages
+            .map(msg => {
+                const text = msg.parts?.[0]?.text ?? (typeof msg.content === 'string' ? msg.content : null);
+                if (text == null || text === '') return null;
+                return {
+                    role: msg.role === 'model' ? 'assistant' : 'user',
+                    content: String(text)
+                };
+            })
+            .filter(Boolean);
+
+        if (mapped.length === 0) {
+            return res.status(400).json({
+                message: 'No valid messages to process.'
             });
         }
 
-        const historyWithContext = [...validHistory];
-        historyWithContext[0] = {
-            role: 'user',
-            parts: [{ text: systemContext + "\n\n" + validHistory[0].parts[0].text }]
+        // 1) Try Google Gemini first
+        if (hasGemini) {
+            try {
+                console.log('Trying Google Gemini...');
+                const geminiText = await tryGemini(systemContext, mapped);
+                if (geminiText) {
+                    console.log('✅ Gemini success');
+                    return res.status(201).json({ message: geminiText });
+                }
+            } catch (err) {
+                const status = err.response?.status ?? err.status;
+                if (status === 429) {
+                    return res.status(429).json({
+                        message: 'Too many requests. Please wait a minute and try again.'
+                    });
+                }
+                console.error('❌ Gemini failed:', getApiError(err));
+            }
+        }
+
+        // 2) Fallback: OpenRouter
+        const openRouterMessages = [
+            { role: 'system', content: systemContext },
+            ...mapped
+        ];
+        const requestConfig = {
+            headers: {
+                'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                'HTTP-Referer': 'http://localhost:5173',
+                'X-Title': 'AlgoBench AI Tutor',
+                'Content-Type': 'application/json'
+            },
+            timeout: 60000
         };
 
-        const chat = model.startChat({
-            history: historyWithContext.slice(0, -1)
+        let lastError = null;
+        for (const model of OPENROUTER_FREE_MODELS) {
+            if (!hasOpenRouter) break;
+            try {
+                console.log(`Trying OpenRouter model: ${model}`);
+                const response = await axios.post(
+                    'https://openrouter.ai/api/v1/chat/completions',
+                    { model, messages: openRouterMessages },
+                    requestConfig
+                );
+                const choice = response.data?.choices?.[0];
+                const aiMessage = choice?.message?.content ?? choice?.text;
+                if (aiMessage != null && aiMessage !== '') {
+                    console.log(`✅ OpenRouter success with model: ${model}`);
+                    return res.status(201).json({
+                        message: typeof aiMessage === 'string' ? aiMessage : String(aiMessage)
+                    });
+                }
+            } catch (err) {
+                lastError = err;
+                console.error(`❌ Model ${model} failed:`, getApiError(err));
+            }
+        }
+
+        let message = lastError
+            ? getApiError(lastError)
+            : 'AI returned an empty response. Please try again.';
+        let status = lastError?.response?.status || 502;
+        if (status === 429) {
+            message = 'Too many requests. Please wait a minute and try again.';
+        }
+        return res.status(status).json({
+            message,
+            error: message,
+            details: process.env.NODE_ENV === 'development' && lastError?.stack ? lastError.stack : undefined
         });
-
-        const lastMessage = validHistory[validHistory.length - 1];
-        const result = await chat.sendMessage(lastMessage.parts[0].text);
-        const response = await result.response;
-        const text = response.text();
-
-        console.log('✅ Gemini Response sent successfully');
-        return res.status(201).json({
-            message: text
-        });
-
-    }
-    catch (err) {
-        console.error('=== AI Chatbot Error ===');
-        console.error('Error message:', err.message);
-        console.error('Error stack:', err.stack);
-
-        // Send more detailed error to frontend
-        res.status(500).json({
-            message: err.message || "Internal server error",
-            error: err.message,
+    } catch (err) {
+        console.error('=== AI Chatbot Error ===', err.message);
+        const status = err.response?.status || 500;
+        const message = getApiError(err) || err.message || 'Internal server error';
+        res.status(status).json({
+            message,
+            error: message,
             details: process.env.NODE_ENV === 'development' ? err.stack : undefined
         });
     }
-}
+};
 
 module.exports = solveDoubt;

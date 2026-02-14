@@ -42,6 +42,7 @@ export default function CommunityNav({ user }) {
 
                             <div className="hidden md:flex items-center gap-8 text-sm font-medium" style={{ color: '#9A9A9A' }}>
                                 <NavLink to="/problems" className="hover:text-white transition-colors">Problems</NavLink>
+                                <NavLink to="/contests" className="hover:text-white transition-colors">Contests</NavLink>
                                 <NavLink to="/community" className="text-white transition-colors">Community</NavLink>
                                 <NavLink to="/visualizer" className="hover:text-white transition-colors">Visualizer</NavLink>
                             </div>
@@ -66,6 +67,7 @@ export default function CommunityNav({ user }) {
             <div className={`fixed inset-0 z-40 backdrop-blur-xl md:hidden transition-all duration-300 ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`} style={{ backgroundColor: 'rgba(11, 11, 14, 0.95)' }}>
                 <div className="flex flex-col items-center justify-center h-full gap-8 p-6">
                     <NavLink to="/problems" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Problems</NavLink>
+                    <NavLink to="/contests" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Contests</NavLink>
                     <NavLink to="/community" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-white">Community</NavLink>
                     <NavLink to="/visualizer" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Visualizer</NavLink>
                     <div className="w-16 h-px my-4" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />

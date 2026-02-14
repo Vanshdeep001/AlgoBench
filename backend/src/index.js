@@ -12,6 +12,9 @@ const videoRouter = require("./routes/videoCreator");
 const userProfileRouter = require("./routes/userProfile");
 const userHeatmapRouter = require("./routes/userHeatmap");
 const userAcceptanceRouter = require("./routes/userAcceptance");
+const communityRouter = require("./routes/community");
+const contestRouter = require("./routes/contests");
+const adminContestRouter = require("./routes/adminContests");
 const cors = require('cors')
 
 // console.log("Hello")
@@ -32,24 +35,38 @@ app.use('/problem', problemRouter);
 app.use('/submission', submitRouter);
 app.use('/ai', aiRouter);
 app.use("/video", videoRouter);
+app.use('/community', communityRouter);
+app.use('/contest', contestRouter);
+app.use('/admin/contests', adminContestRouter);
 
 
 const InitalizeConnection = async () => {
     try {
+        await main();
+        console.log("MongoDB connected");
 
-        await Promise.all([main(), redisClient.connect()]);
-        console.log("DB Connected");
+        try {
+            await redisClient.connect();
+            console.log("Redis connected");
+        } catch (redisErr) {
+            console.warn("Redis connection failed (server will run without Redis):", redisErr.message);
+        }
 
         app.listen(process.env.PORT, () => {
             console.log("Server listening at port number: " + process.env.PORT);
-        })
+        }).on('error', (err) => {
+            if (err.code === 'ECONNRESET') {
+                console.warn("Server connection reset - client may have disconnected");
+            } else {
+                console.error("Server error:", err);
+            }
+        });
 
+    } catch (err) {
+        console.error("Startup error:", err);
+        process.exit(1);
     }
-    catch (err) {
-        console.log("Error: " + err);
-    }
-}
-
+};
 
 InitalizeConnection();
 

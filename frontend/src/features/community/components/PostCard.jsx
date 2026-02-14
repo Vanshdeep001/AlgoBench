@@ -21,12 +21,12 @@ export default function PostCard({
 
     return (
         <div
-            className="rounded-2xl overflow-hidden transition-all duration-200 hover:border-[#D4AF37]/25"
+            className="rounded-2xl overflow-hidden transition-all duration-200 hover:border-[#D4AF37]/20 hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
             style={{
-                border: '1px solid rgba(212, 175, 55, 0.15)',
-                background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(15, 15, 20, 0.98) 100%)',
+                border: '1px solid rgba(212, 175, 55, 0.12)',
+                background: 'linear-gradient(145deg, rgba(24, 24, 30, 0.95) 0%, rgba(18, 18, 24, 0.98) 100%)',
                 backdropFilter: 'blur(20px)',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+                boxShadow: '0 4px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.02)'
             }}
         >
             <div className="flex gap-4 p-5">

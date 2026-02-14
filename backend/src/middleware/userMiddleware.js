@@ -28,11 +28,14 @@ const userMiddleware = async (req, res, next) => {
             throw new Error("User Doesn't Exist");
         }
 
-        // Redis ke blockList mein persent toh nahi hai
-
-        const IsBlocked = await redisClient.exists(`token:${token}`);
-
-        if (IsBlocked)
+        // Redis blocklist check (skip if Redis unavailable so server doesn't crash)
+        let isBlocked = false;
+        try {
+            isBlocked = await redisClient.exists(`token:${token}`);
+        } catch (redisErr) {
+            console.warn('Redis blocklist check skipped:', redisErr.message);
+        }
+        if (isBlocked)
             throw new Error("Invalid Token");
 
         req.result = result;
@@ -41,7 +44,7 @@ const userMiddleware = async (req, res, next) => {
         next();
     }
     catch (err) {
-        res.status(401).send("Error: " + err.message)
+        res.status(401).json({ message: err.message || 'Unauthorized' });
     }
 
 }

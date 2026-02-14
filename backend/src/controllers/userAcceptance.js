@@ -7,7 +7,7 @@ const Submission = require('../models/submission');
  */
 const getUserAcceptance = async (req, res) => {
     try {
-        const userId = req.userId;
+        const userId = req.result._id;
 
         const stats = await Submission.aggregate([
             {

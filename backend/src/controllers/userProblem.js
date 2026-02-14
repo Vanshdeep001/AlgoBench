@@ -2,19 +2,38 @@ const { getLanguageById, submitBatch, submitToken } = require("../utils/problemU
 const Problem = require("../models/problem");
 const User = require("../models/user");
 const Submission = require("../models/submission");
-const SolutionVideo = require("../models/solutionVideo")
+const SolutionVideo = require("../models/solutionVideo");
+
+/** Detect if reference solutions look like function-style (LeetCode) rather than full programs. */
+function looksLikeFunctionStyle(referenceSolution, visibleTestCases) {
+  if (!referenceSolution?.length || !visibleTestCases?.length) return false;
+  const firstInput = (visibleTestCases[0].input || "").trim();
+  const hasExpressionInput = /nums\s*=\s*\[|target\s*=/.test(firstInput);
+  let hasFunctionCode = false;
+  for (const { language, completeCode } of referenceSolution) {
+    const code = (completeCode || "").trim();
+    const noMain = !/int\s+main\s*\(|public\s+static\s+void\s+main|readFileSync\s*\(\s*0|process\.stdin/.test(code);
+    const hasClassOrFunc = /class\s+Solution|linearSearch\s*\(|function\s*\(\s*nums/.test(code);
+    if (noMain && hasClassOrFunc) hasFunctionCode = true;
+  }
+  return hasExpressionInput && hasFunctionCode;
+}
+
+const FORMAT_HINT = " This system runs complete programs: code must read from stdin and print the result to stdout. Test input must be plain text (e.g. first line: n, second line: space-separated numbers, third line: target). Use the sample format from the Linear Search problem (see Import from JSON sample or linear-search-problem.json).";
 
 const createProblem = async (req, res) => {
 
-  // API request to authenticate user:
   const { title, description, difficulty, tags,
     visibleTestCases, hiddenTestCases, startCode,
-    referenceSolution, problemCreator
+    referenceSolution, problemCreator,
+    skipReferenceValidation
   } = req.body;
 
+  // Only run Judge0 when explicitly false (string "false" or boolean false). Default = skip.
+  const runJudge0Validation = skipReferenceValidation === false || skipReferenceValidation === 'false';
 
   try {
-
+    if (runJudge0Validation) {
     for (const { language, completeCode } of referenceSolution) {
 
 
@@ -49,8 +68,6 @@ const createProblem = async (req, res) => {
 
       const resultToken = submitResult.map((value) => value.token);
 
-      // ["db54881d-bcf5-4c7b-a2e3-d33fe7e25de7","ecc52a9b-ea80-4a00-ad50-4ab6cc3bb2a1","1b35ec3b-5776-48ef-b646-d5522bdeb2cc"]
-
       const testResult = await submitToken(resultToken);
 
       if (!testResult || !Array.isArray(testResult)) {
@@ -66,7 +83,17 @@ const createProblem = async (req, res) => {
 
         // Check if execution was successful (status_id 3 = Accepted)
         if (test.status_id != 3) {
-          return res.status(400).send("Test case failed: " + (test.status?.description || "Unknown error"));
+          const baseMsg = "Test case failed: " + (test.status?.description || "Unknown error");
+          const hint = looksLikeFunctionStyle(referenceSolution, visibleTestCases) ? FORMAT_HINT : "";
+          return res.status(400).json({
+            error: "Reference solution failed",
+            message: baseMsg + hint,
+            testCaseIndex: i + 1,
+            language,
+            judge0Status: test.status?.description,
+            stderr: test.stderr || null,
+            stdout: (test.stdout || "").trim() || null
+          });
         }
 
         // Validate output matches expected output
@@ -74,17 +101,26 @@ const createProblem = async (req, res) => {
         const expectedOutputTrimmed = expectedOutput.trim();
 
         if (actualOutput !== expectedOutputTrimmed) {
-          return res.status(400).send(`Test case ${i + 1} failed: Expected "${expectedOutputTrimmed}" but got "${actualOutput}"`);
+          const baseMsg = `Test case ${i + 1} failed: Expected "${expectedOutputTrimmed}" but got "${actualOutput}"`;
+          const hint = looksLikeFunctionStyle(referenceSolution, visibleTestCases) ? FORMAT_HINT : "";
+          return res.status(400).json({
+            error: "Reference solution failed",
+            message: baseMsg + hint,
+            testCaseIndex: i + 1,
+            language,
+            stderr: test.stderr || null,
+            stdout: actualOutput || null
+          });
         }
       }
 
     }
+    }
 
-
-    // We can store it in our DB
-
+    // Strip skipReferenceValidation so it is not stored in DB
+    const { skipReferenceValidation: _, ...bodyForDb } = req.body;
     const userProblem = await Problem.create({
-      ...req.body,
+      ...bodyForDb,
       problemCreator: req.result._id
     });
 
@@ -92,10 +128,18 @@ const createProblem = async (req, res) => {
   }
   catch (err) {
     console.error('Error in createProblem:', err);
-    res.status(400).send({
+    let message = err.message || "Unknown error occurred";
+    const judge0Response = err.response?.data;
+    const judge0Status = err.response?.status;
+    if (judge0Status === 403 || (judge0Response && String(judge0Response.message || '').toLowerCase().includes('not subscribed'))) {
+      message = "Judge0/RapidAPI error: You are not subscribed to this API (403). Keep 'Skip reference solution validation' checked to create the problem without running code, or subscribe to Judge0 CE on RapidAPI.";
+    } else if (err.response?.data?.message) {
+      message = err.response.data.message;
+    }
+    return res.status(400).json({
       error: "Failed to create problem",
-      message: err.message || "Unknown error occurred",
-      details: err.response?.data || null
+      message,
+      details: judge0Response || null
     });
   }
 }
@@ -152,8 +196,6 @@ const updateProblem = async (req, res) => {
 
       const resultToken = submitResult.map((value) => value.token);
 
-      // ["db54881d-bcf5-4c7b-a2e3-d33fe7e25de7","ecc52a9b-ea80-4a00-ad50-4ab6cc3bb2a1","1b35ec3b-5776-48ef-b646-d5522bdeb2cc"]
-
       const testResult = await submitToken(resultToken);
 
       if (!testResult || !Array.isArray(testResult)) {
@@ -167,7 +209,11 @@ const updateProblem = async (req, res) => {
 
         // Check if execution was successful (status_id 3 = Accepted)
         if (test.status_id != 3) {
-          return res.status(400).send("Test case failed: " + (test.status?.description || "Unknown error"));
+          return res.status(400).json({
+            error: "Reference solution failed",
+            message: "Test case failed: " + (test.status?.description || "Unknown error"),
+            testCaseIndex: i + 1
+          });
         }
 
         // Validate output matches expected output
@@ -175,7 +221,11 @@ const updateProblem = async (req, res) => {
         const expectedOutputTrimmed = expectedOutput.trim();
 
         if (actualOutput !== expectedOutputTrimmed) {
-          return res.status(400).send(`Test case ${i + 1} failed: Expected "${expectedOutputTrimmed}" but got "${actualOutput}"`);
+          return res.status(400).json({
+            error: "Reference solution failed",
+            message: `Test case ${i + 1} failed: Expected "${expectedOutputTrimmed}" but got "${actualOutput}"`,
+            testCaseIndex: i + 1
+          });
         }
       }
 
