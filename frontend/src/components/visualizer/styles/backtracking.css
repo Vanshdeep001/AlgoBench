@@ -1,0 +1,441 @@
+/* Backtracking Visualization Styles - Creative Animations */
+
+.backtracking-view-container {
+    width: 100%;
+    height: 100%;
+    min-height: 550px;
+    max-height: 650px;
+    background: radial-gradient(circle at center, rgba(30, 30, 35, 0.8) 0%, rgba(11, 11, 14, 0.95) 100%);
+    border-radius: 16px;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+}
+
+/* N-Queens Board */
+.chess-board {
+    display: grid;
+    gap: 2px;
+    background: rgba(212, 175, 55, 0.1);
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.chess-cell {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    font-size: 32px;
+}
+
+.chess-cell.light {
+    background: linear-gradient(135deg, rgba(237, 237, 237, 0.15) 0%, rgba(200, 200, 200, 0.1) 100%);
+}
+
+.chess-cell.dark {
+    background: linear-gradient(135deg, rgba(50, 50, 55, 0.8) 0%, rgba(30, 30, 35, 0.9) 100%);
+}
+
+.chess-cell.trying {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(37, 99, 235, 0.3) 100%);
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.5);
+    animation: tryingPulse 1s ease-in-out infinite;
+}
+
+.chess-cell.placed {
+    background: linear-gradient(135deg, #D4AF37 0%, #B8962E 100%);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.7), 0 0 40px rgba(212, 175, 55, 0.4);
+    animation: queenPlace 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.chess-cell.unsafe {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.4) 0%, rgba(220, 38, 38, 0.3) 100%);
+    animation: unsafeShake 0.5s ease-out;
+}
+
+.chess-cell.backtrack {
+    animation: backtrackFade 0.5s ease-out;
+}
+
+.queen-icon {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    animation: queenAppear 0.5s ease-out;
+}
+
+/* Sudoku Grid */
+.sudoku-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 1px;
+    background: rgba(212, 175, 55, 0.3);
+    padding: 4px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.sudoku-cell {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(30, 30, 36, 0.95) 0%, rgba(20, 20, 25, 0.98) 100%);
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: #EDEDED;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sudoku-cell.fixed {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(79, 70, 229, 0.15) 100%);
+    color: #6366f1;
+}
+
+.sudoku-cell.trying {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.2) 100%);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    animation: cellTrying 0.8s ease-in-out infinite;
+}
+
+.sudoku-cell.placed {
+    background: linear-gradient(135deg, #D4AF37 0%, #B8962E 100%);
+    color: #0B0B0E;
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.6);
+    animation: numberPlace 0.5s ease-out;
+}
+
+/* Maze Grid */
+.maze-grid {
+    display: grid;
+    gap: 2px;
+    background: rgba(212, 175, 55, 0.1);
+    padding: 6px;
+    border-radius: 12px;
+}
+
+.maze-cell {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.maze-cell.wall {
+    background: linear-gradient(135deg, rgba(50, 50, 55, 0.9) 0%, rgba(30, 30, 35, 0.95) 100%);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.maze-cell.path {
+    background: linear-gradient(135deg, rgba(237, 237, 237, 0.1) 0%, rgba(200, 200, 200, 0.05) 100%);
+}
+
+.maze-cell.exploring {
+    background: linear-gradient(135deg, #D4AF37 0%, #B8962E 100%);
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.6);
+    animation: exploreCell 0.6s ease-out;
+}
+
+.maze-cell.solution {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+    animation: solutionPath 0.5s ease-out;
+}
+
+.maze-cell.backtrack {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.2) 100%);
+    animation: mazeBacktrack 0.5s ease-out;
+}
+
+.maze-cell.start {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+}
+
+.maze-cell.end {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+}
+
+/* Subset Visualization */
+.subset-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.subset-array {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.subset-element {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(30, 30, 36, 0.95) 0%, rgba(20, 20, 25, 0.98) 100%);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: 10px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #EDEDED;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.subset-element.included {
+    background: linear-gradient(135deg, #D4AF37 0%, #B8962E 100%);
+    border-color: #fff;
+    color: #0B0B0E;
+    transform: translateY(-8px);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.7), 0 8px 16px rgba(0, 0, 0, 0.4);
+    animation: includeElement 0.5s ease-out;
+}
+
+.subset-element.excluded {
+    opacity: 0.3;
+    transform: scale(0.9);
+    animation: excludeElement 0.4s ease-out;
+}
+
+.subset-sum-display {
+    padding: 16px 32px;
+    background: linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(15, 15, 20, 0.98) 100%);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: #D4AF37;
+}
+
+/* Premium Animations */
+@keyframes tryingPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 16px rgba(59, 130, 246, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 28px rgba(59, 130, 246, 0.8);
+    }
+}
+
+@keyframes queenPlace {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.2) rotate(10deg);
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes unsafeShake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-4px);
+    }
+
+    75% {
+        transform: translateX(4px);
+    }
+}
+
+@keyframes backtrackFade {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+}
+
+@keyframes queenAppear {
+    0% {
+        transform: scale(0) rotate(-90deg);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes cellTrying {
+
+    0%,
+    100% {
+        box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
+    }
+}
+
+@keyframes numberPlace {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes exploreCell {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes solutionPath {
+    0% {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes mazeBacktrack {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.4;
+    }
+}
+
+@keyframes includeElement {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-12px) scale(1.1);
+    }
+
+    100% {
+        transform: translateY(-8px) scale(1);
+    }
+}
+
+@keyframes excludeElement {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0.3;
+        transform: scale(0.9);
+    }
+}
+
+/* Sudoku Borders for 3x3 Subgrids */
+.sudoku-cell {
+    position: relative;
+    z-index: 1;
+}
+
+.sudoku-cell.border-right {
+    border-right: 2px solid rgba(212, 175, 55, 0.8);
+}
+
+.sudoku-cell.border-bottom {
+    border-bottom: 2px solid rgba(212, 175, 55, 0.8);
+}
+
+/* Rat in Maze Icons */
+.rat-icon {
+    font-size: 24px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    animation: ratMove 0.3s ease-out;
+}
+
+.cheese-icon {
+    font-size: 24px;
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+    animation: cheeseFloat 2s ease-in-out infinite;
+}
+
+@keyframes ratMove {
+    0% {
+        transform: scale(0.8);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes cheeseFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-4px);
+    }
+}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { generateArrayData } from '../utils/generateData';
+import { generateArrayData, generateGraphData } from '../utils/generateData';
 import { createDelay } from '../utils/delay';
 
 export const useAnimator = (selectedAlgorithm, inputData, target, arraySize, speed) => {
@@ -13,7 +13,22 @@ export const useAnimator = (selectedAlgorithm, inputData, target, arraySize, spe
   // Initialize data when inputs change
   useEffect(() => {
     if (selectedAlgorithm) {
-      const newData = generateArrayData(inputData, arraySize);
+      let newData;
+
+      // Generate appropriate data based on visualization type
+      if (selectedAlgorithm.visualizationType === 'graph') {
+        newData = generateGraphData(arraySize || 6);
+      } else if (selectedAlgorithm.visualizationType === 'tree') {
+        // For now, trees will use array data until we implement tree generation
+        newData = generateArrayData(inputData, arraySize);
+      } else if (selectedAlgorithm.visualizationType === 'backtracking' || selectedAlgorithm.visualizationType === 'math') {
+        // Backtracking and math use array data for input
+        newData = generateArrayData(inputData, arraySize);
+      } else {
+        // Default: array data for sorting, searching, dp
+        newData = generateArrayData(inputData, arraySize);
+      }
+
       setData(newData);
       setCurrentState({});
       setIsAnimating(false);
@@ -34,9 +49,37 @@ export const useAnimator = (selectedAlgorithm, inputData, target, arraySize, spe
     setIsAnimating(true);
     isAnimatingRef.current = true;
 
+    // Prepare data for algorithm based on type
+    let algorithmInput;
+    let param2, param3;
+
+    if (selectedAlgorithm.visualizationType === 'graph') {
+      algorithmInput = data; // Pass graph object directly
+      // For graph algorithms: inputData = start node, target = end node
+      // Parse start node (could be letter like 'A' or number like '0')
+      const startInput = inputData?.trim() || '0';
+      const startNode = data.nodes?.find(n =>
+        n.value?.toString() === startInput || n.id?.toString() === startInput
+      );
+      param2 = startNode ? startNode.id : 0; // startNodeId
+
+      // Parse end node for Dijkstra
+      if (target && selectedAlgorithm.name?.toLowerCase().includes('dijkstra')) {
+        const endInput = target.trim();
+        const endNode = data.nodes?.find(n =>
+          n.value?.toString() === endInput || n.id?.toString() === endInput
+        );
+        param3 = endNode ? endNode.id : undefined; // endNodeId
+      }
+    } else {
+      algorithmInput = data.map ? data.map(d => d.value) : data; // Pass array of values
+      param2 = target; // For array algorithms, second param is target
+    }
+
     const algorithmGenerator = selectedAlgorithm.algorithm(
-      data.map(d => d.value),
-      target,
+      algorithmInput,
+      param2,
+      param3 || delay,
       delay
     );
 
@@ -146,9 +189,16 @@ export const useAnimator = (selectedAlgorithm, inputData, target, arraySize, spe
       generatorRef.current = null;
     }
     setCurrentState({});
-    const newData = generateArrayData(inputData, arraySize);
+
+    // Generate appropriate data based on visualization type
+    let newData;
+    if (selectedAlgorithm?.visualizationType === 'graph') {
+      newData = generateGraphData(arraySize || 6);
+    } else {
+      newData = generateArrayData(inputData, arraySize);
+    }
     setData(newData);
-  }, [inputData, arraySize]);
+  }, [selectedAlgorithm, inputData, arraySize]);
 
   const stepForward = useCallback(() => {
     // Step forward implementation

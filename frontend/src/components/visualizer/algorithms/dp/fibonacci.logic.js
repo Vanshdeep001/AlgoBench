@@ -1,7 +1,29 @@
 export const fibonacci = async function* (nInput, target, delay) {
     // Input: n (number to calculate fib for)
-    // Default to 6 if not valid
-    const n = (nInput && !isNaN(nInput) && nInput > 0) ? Math.min(parseInt(nInput), 20) : 6;
+    // Can be a number, or string like "n: 10" or just "10"
+    let n = 6; // Default
+
+    if (nInput) {
+        if (typeof nInput === 'number' && !isNaN(nInput) && nInput > 0) {
+            n = Math.min(parseInt(nInput), 20);
+        } else if (typeof nInput === 'string' && nInput.trim()) {
+            const input = nInput.trim();
+            // Try parsing "n: 10" format
+            if (input.toLowerCase().startsWith('n:')) {
+                const numStr = input.substring(input.indexOf(':') + 1).trim();
+                const parsed = parseInt(numStr);
+                if (!isNaN(parsed) && parsed > 0) {
+                    n = Math.min(parsed, 20);
+                }
+            } else {
+                // Try parsing as direct number
+                const parsed = parseInt(input);
+                if (!isNaN(parsed) && parsed > 0) {
+                    n = Math.min(parsed, 20);
+                }
+            }
+        }
+    }
 
     // Create table data structure
     const table = new Array(n + 1).fill(null);

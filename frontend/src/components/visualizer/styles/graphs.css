@@ -1,12 +1,15 @@
-/* Graph Visualization Styles */
+/* Graph Visualization Container - Full Screen */
 .graph-view-container {
     width: 100%;
     height: 100%;
+    min-height: 650px;
+    max-height: calc(100vh - 200px);
     background: radial-gradient(circle at center, rgba(30, 30, 35, 0.8) 0%, rgba(11, 11, 14, 0.95) 100%);
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
     cursor: grab;
     position: relative;
+    box-shadow: inset 0 0 40px rgba(212, 175, 55, 0.1);
 }
 
 .graph-view-container:active {
@@ -19,101 +22,223 @@
     display: block;
 }
 
-/* Nodes */
+/* Nodes - Enhanced with Premium Effects */
 .graph-node {
     fill: #1e1e24;
-    /* Dark background */
     stroke: #D4AF37;
-    /* Gold border */
-    stroke-width: 2px;
-    transition: all 0.3s ease;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+    stroke-width: 2.5px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 12px rgba(212, 175, 55, 0.15));
 }
 
 .graph-node:hover {
-    fill: rgba(212, 175, 55, 0.1);
-    stroke-width: 3px;
+    fill: rgba(212, 175, 55, 0.15);
+    stroke-width: 3.5px;
     cursor: pointer;
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 20px rgba(212, 175, 55, 0.4));
+    transform: scale(1.08);
 }
 
 .graph-node.active {
     fill: #D4AF37;
     stroke: #fff;
-    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.6));
-    animation: pulseNode 1.5s infinite;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 16px rgba(212, 175, 55, 0.8)) drop-shadow(0 0 32px rgba(212, 175, 55, 0.5));
+    animation: pulseNodeGlow 1.2s ease-in-out infinite;
 }
 
 .graph-node.visited {
-    fill: rgba(99, 102, 241, 0.2);
+    fill: rgba(99, 102, 241, 0.25);
     stroke: #6366f1;
-    /* Indigo */
+    stroke-width: 2.5px;
+    filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));
+    animation: fadeInNode 0.5s ease-out;
 }
 
 .graph-node.path {
     fill: #10b981;
-    /* Green */
     stroke: #fff;
-    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.6)) drop-shadow(0 0 24px rgba(16, 185, 129, 0.4));
+    animation: pathReveal 0.6s ease-out;
 }
 
 .graph-node.start {
     fill: #3b82f6;
-    /* Blue */
     stroke: #fff;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.6));
+    animation: startPulse 2s ease-in-out infinite;
 }
 
 .graph-node.target {
     fill: #ef4444;
-    /* Red */
     stroke: #fff;
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.6));
+    animation: targetPulse 2s ease-in-out infinite;
+}
+
+/* Node Text - Enhanced Typography */
+.graph-node-text {
+    fill: #EDEDED;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    pointer-events: none;
+    user-select: none;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .node-text {
     fill: #EDEDED;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Orbitron', sans-serif;
     font-weight: 700;
     font-size: 14px;
     pointer-events: none;
     user-select: none;
+    transition: all 0.3s ease;
 }
 
 .graph-node.active+.node-text {
     fill: #0B0B0E;
-    /* Dark text on gold active node */
+    font-weight: 800;
 }
 
 .graph-node.path+.node-text {
     fill: #fff;
+    font-weight: 800;
 }
 
-/* Edges */
+/* Edges - Enhanced with Flow Animation */
 .graph-edge {
-    stroke: rgba(212, 175, 55, 0.2);
+    stroke: rgba(212, 175, 55, 0.25);
     stroke-width: 2px;
-    transition: all 0.5s ease;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .graph-edge.active {
     stroke: #D4AF37;
-    stroke-width: 3px;
-    filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.4));
+    stroke-width: 3.5px;
+    filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.5));
+    animation: edgeFlow 1.5s ease-in-out infinite;
 }
 
 .graph-edge.path {
     stroke: #10b981;
-    stroke-width: 4px;
+    stroke-width: 4.5px;
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
+    animation: pathEdgeGlow 2s ease-in-out infinite;
 }
 
-@keyframes pulseNode {
-    0% {
+/* Edge weight labels */
+.edge-weight-circle {
+    fill: #1e1e24;
+    stroke: #D4AF37;
+    stroke-width: 1px;
+}
+
+.edge-weight-text {
+    fill: #D4AF37;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+/* Premium Animations */
+@keyframes pulseNodeGlow {
+
+    0%,
+    100% {
         transform: scale(1);
+        filter: drop-shadow(0 0 16px rgba(212, 175, 55, 0.8)) drop-shadow(0 0 32px rgba(212, 175, 55, 0.5));
     }
 
     50% {
-        transform: scale(1.1);
+        transform: scale(1.12);
+        filter: drop-shadow(0 0 24px rgba(212, 175, 55, 1)) drop-shadow(0 0 48px rgba(212, 175, 55, 0.7));
+    }
+}
+
+@keyframes fadeInNode {
+    0% {
+        opacity: 0;
+        transform: scale(0.7);
     }
 
     100% {
+        opacity: 1;
         transform: scale(1);
+    }
+}
+
+@keyframes pathReveal {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    50% {
+        transform: scale(1.15);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes startPulse {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.6));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.9));
+    }
+}
+
+@keyframes targetPulse {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.6));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.9));
+    }
+}
+
+@keyframes edgeFlow {
+    0% {
+        stroke-dasharray: 10 5;
+        stroke-dashoffset: 0;
+    }
+
+    100% {
+        stroke-dashoffset: 15;
+    }
+}
+
+@keyframes pathEdgeGlow {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.8));
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .graph-view-container {
+        min-height: 400px;
+        max-height: 500px;
     }
 }

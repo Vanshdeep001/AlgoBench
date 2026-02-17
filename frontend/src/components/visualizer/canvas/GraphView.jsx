@@ -9,38 +9,18 @@ const GraphView = ({ data, currentState, onNodeClick }) => {
   // Initialize graph data
   useEffect(() => {
     if (data && data.nodes && data.edges) {
+      // Data is already in graph format
       setGraphData(data);
-    } else if (data && Array.isArray(data)) {
-      // If data is just an array (adjacency list or matrix), convert to visual graph
-      // This is a placeholder for conversion logic
-      const nodes = [];
-      const edges = [];
-      // create a simple circle layout
-      const n = data.length;
-      const radius = 150;
-      const centerX = 300;
-      const centerY = 200;
-
-      for (let i = 0; i < n; i++) {
-        const angle = (i / n) * 2 * Math.PI;
-        nodes.push({
-          id: i,
-          value: data[i].value || i,
-          x: centerX + radius * Math.cos(angle),
-          y: centerY + radius * Math.sin(angle)
-        });
-      }
-      setGraphData({ nodes, edges });
     } else {
-      // Default sample graph for demonstration
+      // Fallback: Default sample graph for demonstration
       setGraphData({
         nodes: [
-          { id: 0, value: 'A', x: 300, y: 50 },
-          { id: 1, value: 'B', x: 150, y: 150 },
-          { id: 2, value: 'C', x: 450, y: 150 },
-          { id: 3, value: 'D', x: 150, y: 300 },
-          { id: 4, value: 'E', x: 450, y: 300 },
-          { id: 5, value: 'F', x: 300, y: 400 }
+          { id: 0, value: 'A', x: 500, y: 100 },
+          { id: 1, value: 'B', x: 250, y: 250 },
+          { id: 2, value: 'C', x: 750, y: 250 },
+          { id: 3, value: 'D', x: 250, y: 450 },
+          { id: 4, value: 'E', x: 750, y: 450 },
+          { id: 5, value: 'F', x: 500, y: 600 }
         ],
         edges: [
           { source: 0, target: 1 },
@@ -108,14 +88,15 @@ const GraphView = ({ data, currentState, onNodeClick }) => {
         ref={svgRef}
         width="100%"
         height="100%"
-        viewBox="0 0 600 450"
+        viewBox="0 0 1000 700"
+        preserveAspectRatio="xMidYMid meet"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         className="graph-svg"
       >
         <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="28" refY="3.5" orient="auto">
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="43" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280" />
           </marker>
         </defs>
@@ -172,7 +153,7 @@ const GraphView = ({ data, currentState, onNodeClick }) => {
             style={{ cursor: 'grab' }}
           >
             <circle
-              r="20"
+              r="35"
               className={getNodeClass(node.id)}
             />
             <text

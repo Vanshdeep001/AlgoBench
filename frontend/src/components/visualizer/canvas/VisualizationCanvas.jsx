@@ -3,6 +3,8 @@ import ArrayView from './ArrayView';
 import TreeView from './TreeView';
 import GraphView from './GraphView';
 import DPTableView from './DPTableView';
+import BacktrackingView from './BacktrackingView';
+import MathView from './MathView';
 import { useAnimator } from '../hooks/useAnimator';
 
 const VisualizationCanvas = ({
@@ -117,6 +119,20 @@ const VisualizationCanvas = ({
             onElementClick={(cell) => {
               onExplanationChange(`Cell [${cell.r || cell.i}]: ${cell.val}. ${currentState.explanation || ''}`);
             }}
+          />
+        );
+      case 'backtracking':
+        return (
+          <BacktrackingView
+            data={data}
+            currentState={currentState}
+          />
+        );
+      case 'math':
+        return (
+          <MathView
+            data={data}
+            currentState={currentState}
           />
         );
       default:

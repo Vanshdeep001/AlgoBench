@@ -60,7 +60,7 @@ const TreeView = ({ data, currentState, onNodeClick }) => {
           onClick={() => onNodeClick && onNodeClick(node)}
           className={nodeClass} // Class on group? Or circle.
         >
-          <circle r="22" className={nodeClass} />
+          <circle r="28" className={nodeClass} />
           <text dy=".35em" textAnchor="middle" className="node-text">{node.value}</text>
 
           {/* Height/Balance Factor Label for AVL */}
@@ -79,7 +79,8 @@ const TreeView = ({ data, currentState, onNodeClick }) => {
           ref={svgRef}
           width="100%"
           height="100%"
-          viewBox="0 0 800 600"
+          viewBox="0 0 1000 700"
+          preserveAspectRatio="xMidYMid meet"
           className="tree-svg"
         >
           {renderTree(rootParams)}

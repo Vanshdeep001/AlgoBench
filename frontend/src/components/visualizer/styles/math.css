@@ -1,0 +1,319 @@
+/* Math Visualization Styles - Enhanced & Animated */
+
+.math-view-container {
+    width: 100%;
+    height: 100%;
+    min-height: 500px;
+    margin: 0 auto;
+    background: radial-gradient(circle at center, rgba(30, 30, 35, 0.8) 0%, rgba(11, 11, 14, 0.95) 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+}
+
+/* Sieve of Eratosthenes */
+.sieve-grid-container {
+    width: 100%;
+    max-width: 900px;
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    /* Custom Scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 175, 55, 0.3) transparent;
+}
+
+.sieve-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 10px;
+    justify-content: center;
+}
+
+.sieve-number {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(30, 30, 36, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: #EDEDED;
+    cursor: default;
+    position: relative;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sieve-number.prime {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.3) 100%);
+    border-color: #10b981;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    z-index: 2;
+}
+
+.sieve-number.composite {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: transparent;
+    color: rgba(255, 255, 255, 0.3);
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.sieve-number.current {
+    border-color: #3b82f6;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+    z-index: 5;
+}
+
+.sieve-number.marking {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+    z-index: 4;
+}
+
+/* GCD/LCM Visualization */
+.gcd-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    max-width: 800px;
+}
+
+.gcd-visual-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.gcd-number-box {
+    padding: 20px 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #e2e8f0;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 100px;
+    text-align: center;
+}
+
+.gcd-operation {
+    font-size: 24px;
+    color: #94a3b8;
+    font-weight: bold;
+}
+
+.gcd-steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+}
+
+.gcd-step-item {
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Fast Exponentiation */
+.exponent-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    width: 100%;
+}
+
+.exponent-main-display {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 48px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.base-number {
+    color: #60a5fa;
+}
+
+.exponent-number {
+    color: #f472b6;
+    font-size: 0.6em;
+    transform: translateY(-20px);
+}
+
+.binary-display {
+    display: flex;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px 25px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.binary-bit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: bold;
+    color: #64748b;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.binary-bit.active {
+    color: #facc15;
+    /* Yellow for active bit */
+    background: rgba(250, 204, 21, 0.2);
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+    transform: scale(1.2);
+}
+
+.exponent-result-box {
+    padding: 20px 40px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.2) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    border-radius: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    color: #fff;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+}
+
+/* Factorial Styles */
+.factorial-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    height: 100%;
+}
+
+.factorial-stack {
+    display: flex;
+    flex-direction: column-reverse;
+    /* Stack grows upwards */
+    gap: 10px;
+    width: 100%;
+    max-width: 500px;
+    height: 400px;
+    overflow-y: auto;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stack-frame {
+    padding: 15px 20px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-left: 4px solid #38bdf8;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.stack-frame.returning {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    border-left-color: #10b981;
+}
+
+.memo-table {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 800px;
+}
+
+.memo-entry {
+    padding: 8px 16px;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 20px;
+    color: #e2e8f0;
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Success Overlay */
+.math-success-overlay {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(16, 185, 129, 0.9);
+    padding: 15px 30px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+}
+
+.math-success-icon {
+    font-size: 24px;
+    background: #fff;
+    color: #10b981;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.math-success-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+}

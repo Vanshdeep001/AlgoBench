@@ -6,7 +6,8 @@ import '../styles/visualizer.css';
 import '../styles/graphs.css';
 import '../styles/trees.css';
 import '../styles/dp.css';
-import { ChevronDown, ChevronRight, Code2, Clock } from 'lucide-react';
+import '../styles/backtracking.css';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 const VisualizerLayout = ({
   categories,
@@ -36,8 +37,7 @@ const VisualizerLayout = ({
   const [highlightedLine, setHighlightedLine] = useState(null);
   const [progress, setProgress] = useState(0);
   const [expandedCategories, setExpandedCategories] = useState({});
-  const [codeVisible, setCodeVisible] = useState(false);
-  const [complexityVisible, setComplexityVisible] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const currentCategory = categories[selectedCategory];
 
@@ -48,12 +48,23 @@ const VisualizerLayout = ({
     }));
   };
 
+  const isSplitView = (algo) => {
+    return ['graph', 'tree', 'backtracking', 'math'].includes(algo?.visualizationType);
+  };
+
   return (
-    <div className="visualizer-container-new">
+    <div className={`visualizer-container-new ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       {/* Left Sidebar */}
-      <aside className="visualizer-sidebar-new">
+      <aside className={`visualizer-sidebar-new ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header-new">
           <h2 className="sidebar-title-new">Algorithms</h2>
+          <button
+            className="sidebar-toggle-btn"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          >
+            {sidebarCollapsed ? '→' : '←'}
+          </button>
         </div>
         <nav className="sidebar-nav">
           {Object.entries(categories).map(([key, category]) => {
@@ -120,85 +131,47 @@ const VisualizerLayout = ({
           arraySize={arraySize}
           setArraySize={setArraySize}
           progress={progress}
+          sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={setSidebarCollapsed}
         />
 
         {/* Hero Visualization Area */}
-        <div className="visualization-hero">
-          <VisualizationCanvas
-            selectedAlgorithm={selectedAlgorithm}
-            inputData={inputData}
-            target={target}
-            arraySize={arraySize}
-            isPlaying={isPlaying}
-            speed={speed}
-            onStepChange={setCurrentStep}
-            onStatsChange={setStats}
-            onExplanationChange={setExplanation}
-            onLineHighlight={setHighlightedLine}
-            onProgressChange={setProgress}
-          />
-        </div>
-
-        {/* Step Explanation */}
-        <div className="explanation-section">
-          <div className="explanation-content-new">
-            {explanation}
+        <div className={`visualization-hero ${isSplitView(selectedAlgorithm) ? 'graph-split-view' : ''}`}>
+          {/* Visualization Canvas - Left Side for split view algos */}
+          <div className={isSplitView(selectedAlgorithm) ? 'graph-canvas-container' : 'full-canvas-container'}>
+            <VisualizationCanvas
+              selectedAlgorithm={selectedAlgorithm}
+              inputData={inputData}
+              target={target}
+              arraySize={arraySize}
+              isPlaying={isPlaying}
+              speed={speed}
+              onStepChange={setCurrentStep}
+              onStatsChange={setStats}
+              onExplanationChange={setExplanation}
+              onLineHighlight={setHighlightedLine}
+              onProgressChange={setProgress}
+            />
           </div>
+
+          {/* Explanation Card - Right Side */}
+          {isSplitView(selectedAlgorithm) && (
+            <div className="graph-explanation-card">
+              <div className="explanation-card-header">
+                <h3>Algorithm Steps</h3>
+              </div>
+              <div className="explanation-card-content">
+                {explanation || 'Click play to begin visualization.'}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Code and Complexity Toggle Buttons */}
-        <div className="code-toggle-section">
-          <button
-            className="code-toggle-btn"
-            onClick={() => {
-              setCodeVisible(!codeVisible);
-              if (!codeVisible) setComplexityVisible(false);
-            }}
-          >
-            <Code2 size={16} />
-            {codeVisible ? 'Hide Code' : 'Show Code'}
-          </button>
-          <button
-            className="complexity-toggle-btn"
-            onClick={() => {
-              setComplexityVisible(!complexityVisible);
-              if (!complexityVisible) setCodeVisible(false);
-            }}
-          >
-            <Clock size={16} />
-            {complexityVisible ? 'Hide Complexity' : 'Time & Space Complexity'}
-          </button>
-        </div>
-
-        {/* Code Panel - Collapsible */}
-        {codeVisible && (
-          <CodePanel
-            selectedAlgorithm={selectedAlgorithm}
-            highlightedLine={highlightedLine}
-            onClose={() => setCodeVisible(false)}
-          />
-        )}
-
-        {/* Complexity Panel - Collapsible */}
-        {complexityVisible && (
-          <div className="complexity-panel-new">
-            <div className="complexity-content-new">
-              <div className="complexity-item-new">
-                <div className="complexity-label-new">Time Complexity</div>
-                <div className="complexity-value-new">{stats.timeComplexity}</div>
-              </div>
-              <div className="complexity-item-new">
-                <div className="complexity-label-new">Space Complexity</div>
-                <div className="complexity-value-new">{stats.spaceComplexity}</div>
-              </div>
-              <div className="complexity-item-new">
-                <div className="complexity-label-new">Comparisons</div>
-                <div className="complexity-value-new">{stats.comparisons}</div>
-              </div>
-              <div className="complexity-item-new">
-                <div className="complexity-label-new">Swaps</div>
-                <div className="complexity-value-new">{stats.swaps}</div>
-              </div>
+        {/* Step Explanation - Hidden for split view algos */}
+        {!isSplitView(selectedAlgorithm) && (
+          <div className="explanation-section">
+            <div className="explanation-content-new">
+              {explanation}
             </div>
           </div>
         )}

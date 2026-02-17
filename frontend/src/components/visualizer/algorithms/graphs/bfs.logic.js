@@ -43,7 +43,7 @@ export const bfs = async function* (graphData, startNodeId = 0, delay) {
     await delay();
 
     while (queue.length > 0) {
-        constcurrentNodeId = queue.shift();
+        const currentNodeId = queue.shift();
         visitedOrder.push(currentNodeId);
 
         yield {

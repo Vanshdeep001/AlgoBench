@@ -2,9 +2,40 @@ export const knapsack = async function* (input, target, delay) {
     // Input format expected: "weights: 2,3,4; values: 3,4,5; capacity: 5"
     // Or just defaults
 
-    const weights = [2, 3, 4, 5];
-    const values = [3, 4, 5, 6];
-    const capacity = 5;
+    let weights = [2, 3, 4, 5];
+    let values = [3, 4, 5, 6];
+    let capacity = 5;
+
+    // Parse user input
+    if (input && typeof input === 'string' && input.trim()) {
+        try {
+            const parts = input.split(';').map(p => p.trim());
+            for (const part of parts) {
+                if (part.toLowerCase().startsWith('weights:')) {
+                    const weightStr = part.substring(part.indexOf(':') + 1).trim();
+                    const parsedWeights = weightStr.split(',').map(w => parseInt(w.trim())).filter(w => !isNaN(w) && w > 0);
+                    if (parsedWeights.length > 0) weights = parsedWeights;
+                } else if (part.toLowerCase().startsWith('values:') || part.toLowerCase().startsWith('profits:')) {
+                    const valueStr = part.substring(part.indexOf(':') + 1).trim();
+                    const parsedValues = valueStr.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v > 0);
+                    if (parsedValues.length > 0) values = parsedValues;
+                } else if (part.toLowerCase().startsWith('capacity:')) {
+                    const capStr = part.substring(part.indexOf(':') + 1).trim();
+                    const parsedCap = parseInt(capStr);
+                    if (!isNaN(parsedCap) && parsedCap > 0) capacity = parsedCap;
+                }
+            }
+
+            // Ensure weights and values have same length
+            const minLen = Math.min(weights.length, values.length);
+            weights = weights.slice(0, minLen);
+            values = values.slice(0, minLen);
+        } catch (e) {
+            // Use defaults on parse error
+            console.warn('Failed to parse knapsack input, using defaults:', e);
+        }
+    }
+
     const n = weights.length;
 
     // Initialize table (n+1) x (capacity+1)
