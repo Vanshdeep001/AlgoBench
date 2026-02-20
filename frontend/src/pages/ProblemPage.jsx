@@ -8,14 +8,14 @@ import SubmissionHistory from "../components/SubmissionHistory"
 import ChatAi from '../components/ChatAi';
 import Editorial from '../components/Editorial';
 import ProblemDiscussion from '../features/community/pages/ProblemDiscussion';
-import { Code, Play, Send, CheckCircle, XCircle, Clock, Database } from 'lucide-react';
+import { Play, Send, CheckCircle, XCircle, ChevronDown, MessageSquare, Sparkles } from 'lucide-react';
+import '../styles/problem-page-fixes.css';
 
 const langMap = {
   cpp: 'C++',
   java: 'Java',
   javascript: 'JavaScript'
 };
-
 
 const ProblemPage = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -26,11 +26,13 @@ const ProblemPage = () => {
   const [runResult, setRunResult] = useState(null);
   const [submitResult, setSubmitResult] = useState(null);
   const [activeLeftTab, setActiveLeftTab] = useState('description');
-  const [activeRightTab, setActiveRightTab] = useState('code');
+  const [activeRightTab, setActiveRightTab] = useState('testcase');
+  const [isConsoleMinimized, setIsConsoleMinimized] = useState(false);
+  const [isEditorFullscreen, setIsEditorFullscreen] = useState(false);
+  const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const editorRef = useRef(null);
   let { problemId } = useParams();
-
-
 
   const { handleSubmit } = useForm();
 
@@ -38,27 +40,19 @@ const ProblemPage = () => {
     const fetchProblem = async () => {
       setLoading(true);
       try {
-
         const response = await axiosClient.get(`/problem/problemById/${problemId}`);
-
-
         const initialCode = response.data.startCode.find(sc => sc.language === langMap[selectedLanguage]).initialCode;
-
         setProblem(response.data);
-
         setCode(initialCode);
         setLoading(false);
-
       } catch (error) {
         console.error('Error fetching problem:', error);
         setLoading(false);
       }
     };
-
     fetchProblem();
   }, [problemId]);
 
-  // Update code when language changes
   useEffect(() => {
     if (problem) {
       const initialCode = problem.startCode.find(sc => sc.language === langMap[selectedLanguage]).initialCode;
@@ -81,17 +75,15 @@ const ProblemPage = () => {
   const handleRun = async () => {
     setLoading(true);
     setRunResult(null);
+    setActiveRightTab('testcase');
 
     try {
       const response = await axiosClient.post(`/submission/run/${problemId}`, {
         code,
         language: selectedLanguage
       });
-
       setRunResult(response.data);
       setLoading(false);
-      setActiveRightTab('testcase');
-
     } catch (error) {
       console.error('Error running code:', error);
       const msg = error.response?.data?.message || error.response?.data?.error || error.message || 'Run failed. Compiler may be unavailable.';
@@ -101,30 +93,26 @@ const ProblemPage = () => {
         testCases: []
       });
       setLoading(false);
-      setActiveRightTab('testcase');
     }
   };
 
   const handleSubmitCode = async () => {
     setLoading(true);
     setSubmitResult(null);
+    setActiveRightTab('result');
 
     try {
       const response = await axiosClient.post(`/submission/submit/${problemId}`, {
         code: code,
         language: selectedLanguage
       });
-
       setSubmitResult(response.data);
       setLoading(false);
-      setActiveRightTab('result');
-
     } catch (error) {
       console.error('Error submitting code:', error);
       const msg = error.response?.data?.message || error.response?.data?.error || error.message || 'Submission failed.';
       setSubmitResult({ accepted: false, error: msg, passedTestCases: 0, totalTestCases: 0 });
       setLoading(false);
-      setActiveRightTab('result');
     }
   };
 
@@ -176,95 +164,91 @@ const ProblemPage = () => {
   }
 
   return (
-    <div className="min-h-screen max-h-screen flex overflow-hidden" style={{ backgroundColor: '#0B0B0E' }}>
+    <div className="min-h-screen max-h-screen flex overflow-hidden" style={{ backgroundColor: 'var(--bg-editorial)' }}>
       {/* Left Panel */}
-      <div className="w-1/2 flex flex-col overflow-hidden" style={{ borderRight: '1px solid rgba(212, 175, 55, 0.1)' }}>
+      <div className="w-1/2 flex flex-col overflow-hidden left-panel-border">
         {/* Left Tabs */}
-        <div className="flex gap-1 px-4 py-3" style={{
-          background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(15, 15, 20, 0.98) 100%)',
-          borderBottom: '1px solid rgba(212, 175, 55, 0.1)'
-        }}>
-          {['description', 'editorial', 'solutions', 'submissions', 'discussion', 'chatAI'].map((tab) => (
+        <div className="tab-header-fixed gap-1">
+          {['description', 'editorial', 'solutions', 'submissions', 'discussion'].map((tab) => (
             <button
               key={tab}
-              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
-              style={{
-                backgroundColor: activeLeftTab === tab ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
-                color: activeLeftTab === tab ? '#D4AF37' : '#9A9A9A',
-                border: activeLeftTab === tab ? '1px solid rgba(212, 175, 55, 0.3)' : '1px solid transparent'
-              }}
+              className={`panel-tab ${activeLeftTab === tab ? 'active' : ''}`}
               onClick={() => setActiveLeftTab(tab)}
-              onMouseEnter={(e) => {
-                if (activeLeftTab !== tab) {
-                  e.target.style.backgroundColor = 'rgba(212, 175, 55, 0.05)';
-                  e.target.style.color = '#D4AF37';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeLeftTab !== tab) {
-                  e.target.style.backgroundColor = 'transparent';
-                  e.target.style.color = '#9A9A9A';
-                }
-              }}
             >
-              {tab === 'chatAI' ? 'Chat AI' : tab === 'discussion' ? 'Discussion' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'discussion' ? 'Discussion' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
 
         {/* Left Content */}
-        <div className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: '#0B0B0E' }}>
+        <div className="flex-1 overflow-y-auto p-8 problem-page-container">
           {problem && (
             <>
               {activeLeftTab === 'description' && (
-                <div>
-                  <div className="flex items-center gap-4 mb-6">
-                    <h1 className="text-2xl font-display font-bold text-white">{problem.title}</h1>
-                    <div
-                      className="px-3 py-1 rounded-full text-xs font-bold"
-                      style={{
-                        backgroundColor: getDifficultyBg(problem.difficulty),
-                        border: `1px solid ${getDifficultyBorder(problem.difficulty)}`,
-                        color: getDifficultyColor(problem.difficulty)
-                      }}
-                    >
-                      {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
-                    </div>
-                    <div
-                      className="px-3 py-1 rounded-full text-xs font-medium"
-                      style={{
-                        backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                        color: '#60a5fa'
-                      }}
-                    >
-                      {problem.tags}
+                <div className="tab-content-fade">
+                  <div className="flex items-center gap-6 mb-8">
+                    <h1 className="problem-title m-0">{problem.title}</h1>
+                    <div className="flex gap-3">
+                      <div
+                        className="difficulty-badge"
+                        style={{
+                          border: `1px solid ${getDifficultyColor(problem.difficulty)}`,
+                          color: getDifficultyColor(problem.difficulty)
+                        }}
+                      >
+                        {problem.difficulty}
+                      </div>
+                      <div className="tag-badge">
+                        {problem.tags}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="prose max-w-none">
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: '#EDEDED' }}>
-                      {problem.description}
+                  <div className="description-content">
+                    <p className="mb-4">
+                      Write a program that <strong className="text-[#D4AF37]">reads from stdin</strong>:
+                    </p>
+                    <ul className="list-disc pl-6 mb-6 space-y-2">
+                      <li>First line: <strong className="text-white">integer n</strong> (array size)</li>
+                      <li>Second line: <strong className="text-white">n space-separated integers</strong></li>
+                      <li>Third line: <strong className="text-white">integer target</strong></li>
+                    </ul>
+                    <p className="mb-8">
+                      Print the <strong className="text-[#D4AF37]">0-based index</strong> of target in the array, or <strong className="text-red-400">-1</strong> if not found.
+                    </p>
+
+                    <h3 className="section-heading mt-8">Constraints</h3>
+                    <div className="bg-white/5 p-4 rounded border border-white/5 font-mono text-sm mb-8">
+                      <ul className="space-y-1">
+                        <li>• 1 &lt;= n &lt;= 10<sup>5</sup></li>
+                        <li>• -10<sup>9</sup> &lt;= array values and target &lt;= 10<sup>9</sup></li>
+                      </ul>
                     </div>
                   </div>
+
+                  <div className="editorial-divider"></div>
 
                   <div className="mt-8">
-                    <h3 className="text-lg font-semibold mb-4 text-white">Examples:</h3>
-                    <div className="space-y-4">
+                    <h3 className="section-heading">Examples</h3>
+                    <div className="space-y-6">
                       {problem.visibleTestCases.map((example, index) => (
-                        <div
-                          key={index}
-                          className="p-4 rounded-lg"
-                          style={{
-                            background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(15, 15, 20, 0.98) 100%)',
-                            border: '1px solid rgba(212, 175, 55, 0.1)'
-                          }}
-                        >
-                          <h4 className="font-semibold mb-2 text-[#D4AF37]">Example {index + 1}:</h4>
-                          <div className="space-y-2 text-sm font-mono" style={{ color: '#EDEDED' }}>
-                            <div><strong style={{ color: '#9A9A9A' }}>Input:</strong> {example.input}</div>
-                            <div><strong style={{ color: '#9A9A9A' }}>Output:</strong> {example.output}</div>
-                            <div><strong style={{ color: '#9A9A9A' }}>Explanation:</strong> {example.explanation}</div>
+                        <div key={index} className="example-card">
+                          <h4 className="example-title">Example {index + 1}</h4>
+                          <div className="example-body">
+                            <div className="example-row">
+                              <span className="example-label">Input</span>
+                              <span>{example.stdin || example.input}</span>
+                            </div>
+                            <div className="example-row">
+                              <span className="example-label">Output</span>
+                              <span>{example.stdout || example.output}</span>
+                            </div>
+                            {example.explanation && (
+                              <div className="example-row">
+                                <span className="example-label">Explanation</span>
+                                <span className="opacity-80">{example.explanation}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -337,96 +321,80 @@ const ProblemPage = () => {
                 />
               )}
 
-              {activeLeftTab === 'chatAI' && (
-                <div className="prose max-w-none">
-                  <h2 className="text-xl font-bold mb-4 text-white">CHAT with AI</h2>
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                    <ChatAi problem={problem}></ChatAi>
-                  </div>
-                </div>
-              )}
+              <></>
             </>
           )}
         </div>
       </div>
 
       {/* Right Panel */}
-      <div className="w-1/2 flex flex-col overflow-hidden">
-        {/* Right Tabs */}
-        <div className="flex gap-1 px-4 py-3" style={{
-          background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(15, 15, 20, 0.98) 100%)',
-          borderBottom: '1px solid rgba(212, 175, 55, 0.1)'
-        }}>
-          {['code', 'testcase', 'result'].map((tab) => (
-            <button
-              key={tab}
-              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
-              style={{
-                backgroundColor: activeRightTab === tab ? 'rgba(212, 175, 55, 0.15)' : 'transparent',
-                color: activeRightTab === tab ? '#D4AF37' : '#9A9A9A',
-                border: activeRightTab === tab ? '1px solid rgba(212, 175, 55, 0.3)' : '1px solid transparent'
-              }}
-              onClick={() => setActiveRightTab(tab)}
-              onMouseEnter={(e) => {
-                if (activeRightTab !== tab) {
-                  e.target.style.backgroundColor = 'rgba(212, 175, 55, 0.05)';
-                  e.target.style.color = '#D4AF37';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeRightTab !== tab) {
-                  e.target.style.backgroundColor = 'transparent';
-                  e.target.style.color = '#9A9A9A';
-                }
-              }}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* Right Content */}
+      <div className={`right-panel-fixed ${isEditorFullscreen ? 'fullscreen' : 'w-1/2'} flex overflow-hidden`}>
         <div className="flex-1 flex flex-col overflow-hidden">
-          {activeRightTab === 'code' && (
-            <div className="h-full flex flex-col overflow-hidden">
-              {/* Language Selector */}
-              <div
-                className="flex justify-between items-center p-4"
-                style={{
-                  borderBottom: '1px solid rgba(212, 175, 55, 0.1)',
-                  backgroundColor: 'rgba(15, 15, 20, 0.5)'
-                }}
-              >
-                <div className="flex gap-2">
-                  {['javascript', 'java', 'cpp'].map((lang) => (
-                    <button
-                      key={lang}
-                      className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200"
-                      style={{
-                        backgroundColor: selectedLanguage === lang ? 'rgba(212, 175, 55, 0.2)' : 'rgba(20, 20, 25, 0.8)',
-                        color: selectedLanguage === lang ? '#D4AF37' : '#EDEDED',
-                        border: selectedLanguage === lang ? '1px solid rgba(212, 175, 55, 0.4)' : '1px solid rgba(212, 175, 55, 0.1)'
-                      }}
-                      onClick={() => handleLanguageChange(lang)}
-                      onMouseEnter={(e) => {
-                        if (selectedLanguage !== lang) {
-                          e.target.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (selectedLanguage !== lang) {
-                          e.target.style.backgroundColor = 'rgba(20, 20, 25, 0.8)';
-                        }
-                      }}
-                    >
-                      {lang === 'cpp' ? 'C++' : lang === 'javascript' ? 'JavaScript' : 'Java'}
-                    </button>
-                  ))}
-                </div>
+          {/* Code Editor Section */}
+          <div className="flex-1 flex flex-col overflow-hidden" style={{ borderBottom: '1px solid var(--border-editorial)' }}>
+            {/* Language Selector + Fullscreen Toggle */}
+            <div
+              className="justify-between items-center tab-header-fixed"
+              style={{ position: 'relative', zIndex: 100 }}
+            >
+              <div className="language-selector-container">
+                <button
+                  className="language-toggle-btn"
+                  onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+                >
+                  <span className="text-[#D4AF37] font-mono mr-2">{"< / >"}</span>
+                  {langMap[selectedLanguage]}
+                  <ChevronDown className={`ml-2 transition-transform ${isLanguageDropdownOpen ? 'rotate-180' : ''}`} size={16} />
+                </button>
+
+                {isLanguageDropdownOpen && (
+                  <div className="language-dropdown">
+                    {['javascript', 'java', 'cpp'].map((lang) => (
+                      <button
+                        key={lang}
+                        className={`language-option ${selectedLanguage === lang ? 'active' : ''}`}
+                        onClick={() => {
+                          handleLanguageChange(lang);
+                          setIsLanguageDropdownOpen(false);
+                        }}
+                      >
+                        {langMap[lang]}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Monaco Editor */}
-              <div className="flex-1 overflow-hidden" style={{ backgroundColor: '#1E1E1E' }}>
+              <div className="flex gap-2">
+                <button
+                  className={`editor-fullscreen-btn ${isChatOpen ? 'active' : ''}`}
+                  onClick={() => setIsChatOpen(!isChatOpen)}
+                  title="AI Chat"
+                  style={{
+                    borderColor: isChatOpen ? 'var(--accent-gold)' : 'var(--border-editorial)',
+                    color: isChatOpen ? 'var(--accent-gold)' : 'var(--text-secondary)'
+                  }}
+                >
+                  <Sparkles size={18} />
+                </button>
+
+                <button
+                  className="editor-fullscreen-btn"
+                  onClick={() => setIsEditorFullscreen(!isEditorFullscreen)}
+                  title={isEditorFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                >
+                  {isEditorFullscreen ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Monaco Editor */}
+            <div className="flex-1 flex overflow-hidden editor-wrapper-fixed">
+              <div className="flex-1 overflow-hidden">
                 <Editor
                   height="100%"
                   language={getLanguageForMonaco(selectedLanguage)}
@@ -456,244 +424,224 @@ const ProblemPage = () => {
                     overviewRulerLanes: 0,
                     hideCursorInOverviewRuler: true,
                     overviewRulerBorder: false,
+                    scrollbar: {
+                      vertical: 'auto',
+                      horizontal: 'auto',
+                      verticalScrollbarSize: 6,
+                      horizontalScrollbarSize: 6,
+                    }
                   }}
                 />
               </div>
+            </div>
+          </div>
 
-              {/* Action Buttons */}
-              <div
-                className="p-4 flex justify-between"
-                style={{
-                  borderTop: '1px solid rgba(212, 175, 55, 0.1)',
-                  background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.95) 0%, rgba(15, 15, 20, 0.98) 100%)'
-                }}
-              >
-                <div className="flex gap-2">
+          {/* Console-Style Bottom Panel */}
+          <div className={`console-panel ${isConsoleMinimized ? 'minimized' : ''}`} style={{ height: isConsoleMinimized ? '48px' : '40vh' }}>
+            <div className="console-tabs">
+              <div className="flex h-full">
+                {['testcase', 'result'].map((tab) => (
                   <button
-                    className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
-                    style={{
-                      backgroundColor: 'rgba(20, 20, 25, 0.8)',
-                      color: '#9A9A9A',
-                      border: '1px solid rgba(212, 175, 55, 0.1)'
-                    }}
-                    onClick={() => setActiveRightTab('testcase')}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
-                      e.target.style.color = '#D4AF37';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'rgba(20, 20, 25, 0.8)';
-                      e.target.style.color = '#9A9A9A';
+                    key={tab}
+                    className={`panel-tab ${activeRightTab === tab ? 'active' : ''}`}
+                    onClick={() => {
+                      setActiveRightTab(tab);
+                      if (isConsoleMinimized) setIsConsoleMinimized(false);
                     }}
                   >
-                    Console
+                    {tab === 'testcase' ? 'Test Cases' : 'Result'}
                   </button>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    className="px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
-                    style={{
-                      backgroundColor: 'rgba(20, 20, 25, 0.8)',
-                      color: '#EDEDED',
-                      border: '1px solid rgba(212, 175, 55, 0.3)'
-                    }}
-                    onClick={handleRun}
-                    disabled={loading}
-                    onMouseEnter={(e) => {
-                      if (!loading) {
-                        e.target.style.backgroundColor = 'rgba(212, 175, 55, 0.1)';
-                        e.target.style.borderColor = 'rgba(212, 175, 55, 0.5)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'rgba(20, 20, 25, 0.8)';
-                      e.target.style.borderColor = 'rgba(212, 175, 55, 0.3)';
-                    }}
-                  >
-                    {loading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-t-[#D4AF37] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-                        Running...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-4 h-4" />
-                        Run
-                      </>
-                    )}
-                  </button>
-                  <button
-                    className="px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2"
-                    style={{
-                      backgroundColor: 'rgba(212, 175, 55, 0.2)',
-                      color: '#D4AF37',
-                      border: '1px solid rgba(212, 175, 55, 0.4)'
-                    }}
-                    onClick={handleSubmitCode}
-                    disabled={loading}
-                    onMouseEnter={(e) => {
-                      if (!loading) {
-                        e.target.style.backgroundColor = 'rgba(212, 175, 55, 0.3)';
-                        e.target.style.boxShadow = '0 0 20px rgba(212, 175, 55, 0.3)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  >
-                    {loading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-t-[#D4AF37] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        Submit
-                      </>
-                    )}
-                  </button>
-                </div>
+                ))}
               </div>
+              <button
+                className="console-toggle-btn"
+                onClick={() => setIsConsoleMinimized(!isConsoleMinimized)}
+                title={isConsoleMinimized ? "Maximize" : "Minimize"}
+              >
+                {isConsoleMinimized ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                )}
+              </button>
             </div>
-          )}
 
-          {activeRightTab === 'testcase' && (
-            <div className="flex-1 p-4 overflow-y-auto" style={{ backgroundColor: '#0B0B0E' }}>
-              <h3 className="font-semibold mb-4 text-white">Test Results</h3>
-              {runResult ? (
-                <div
-                  className="mb-4 p-4 rounded-lg"
-                  style={{
-                    backgroundColor: runResult.success ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    border: runResult.success ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)'
-                  }}
-                >
-                  <div>
+            {activeRightTab === 'testcase' && (
+              <div className="console-content">
+                {runResult ? (
+                  <>
                     {runResult.success ? (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <CheckCircle className="w-5 h-5" style={{ color: '#22c55e' }} />
-                          <h4 className="font-bold text-lg" style={{ color: '#22c55e' }}>All test cases passed!</h4>
+                      <div className="result-flat">
+                        <div className="result-flat-header">
+                          <CheckCircle className="result-flat-icon success" size={24} />
+                          <h4 className="result-flat-title success">All test cases passed!</h4>
                         </div>
-                        <div className="flex gap-4 mb-4">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" style={{ color: '#9A9A9A' }} />
-                            <p className="text-sm" style={{ color: '#EDEDED' }}>Runtime: {runResult.runtime + " sec"}</p>
+                        <div className="result-flat-stats">
+                          <div className="result-flat-stat">
+                            <div className="result-flat-stat-label">Runtime</div>
+                            <div className="result-flat-stat-value">{runResult.runtime} sec</div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Database className="w-4 h-4" style={{ color: '#9A9A9A' }} />
-                            <p className="text-sm" style={{ color: '#EDEDED' }}>Memory: {runResult.memory + " KB"}</p>
+                          <div className="result-flat-stat">
+                            <div className="result-flat-stat-label">Memory</div>
+                            <div className="result-flat-stat-value">{runResult.memory} KB</div>
                           </div>
-                        </div>
-
-                        <div className="mt-4 space-y-2">
-                          {(runResult.testCases || []).map((tc, i) => (
-                            <div
-                              key={i}
-                              className="p-3 rounded text-xs"
-                              style={{
-                                backgroundColor: 'rgba(20, 20, 25, 0.8)',
-                                border: '1px solid rgba(34, 197, 94, 0.2)'
-                              }}
-                            >
-                              <div className="font-mono" style={{ color: '#EDEDED' }}>
-                                <div><strong style={{ color: '#9A9A9A' }}>Input:</strong> {tc.stdin}</div>
-                                <div><strong style={{ color: '#9A9A9A' }}>Expected:</strong> {tc.expected_output}</div>
-                                <div><strong style={{ color: '#9A9A9A' }}>Output:</strong> {tc.stdout}</div>
-                                <div style={{ color: '#22c55e' }}>
-                                  ✓ Passed
-                                </div>
-                              </div>
-                            </div>
-                          ))}
                         </div>
                       </div>
                     ) : (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <XCircle className="w-5 h-5" style={{ color: '#ef4444' }} />
-                          <h4 className="font-bold text-lg" style={{ color: '#ef4444' }}>Error</h4>
-                        </div>
-                        <div className="mt-4 space-y-2">
-                          {(runResult.testCases || []).map((tc, i) => (
-                            <div
-                              key={i}
-                              className="p-3 rounded text-xs"
-                              style={{
-                                backgroundColor: 'rgba(20, 20, 25, 0.8)',
-                                border: `1px solid ${tc.status_id == 3 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
-                              }}
-                            >
-                              <div className="font-mono" style={{ color: '#EDEDED' }}>
-                                <div><strong style={{ color: '#9A9A9A' }}>Input:</strong> {tc.stdin}</div>
-                                <div><strong style={{ color: '#9A9A9A' }}>Expected:</strong> {tc.expected_output}</div>
-                                <div><strong style={{ color: '#9A9A9A' }}>Output:</strong> {tc.stdout}</div>
-                                <div style={{ color: tc.status_id == 3 ? '#22c55e' : '#ef4444' }}>
-                                  {tc.status_id == 3 ? '✓ Passed' : '✗ Failed'}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                      <div className="result-flat">
+                        <div className="result-flat-header">
+                          <XCircle className="result-flat-icon error" size={24} />
+                          <h4 className="result-flat-title error">Test Failed</h4>
                         </div>
                       </div>
                     )}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-[#9A9A9A]">
-                  Click "Run" to test your code with the example test cases.
-                </div>
-              )}
-            </div>
-          )}
 
-          {activeRightTab === 'result' && (
-            <div className="flex-1 p-4 overflow-y-auto" style={{ backgroundColor: '#0B0B0E' }}>
-              <h3 className="font-semibold mb-4 text-white">Submission Result</h3>
-              {submitResult ? (
-                <div
-                  className="p-4 rounded-lg"
-                  style={{
-                    backgroundColor: submitResult.accepted ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    border: submitResult.accepted ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)'
-                  }}
-                >
-                  <div>
-                    {submitResult.accepted ? (
-                      <div>
-                        <div className="flex items-center gap-2 mb-4">
-                          <CheckCircle className="w-6 h-6" style={{ color: '#22c55e' }} />
-                          <h4 className="font-bold text-lg" style={{ color: '#22c55e' }}>🎉 Accepted</h4>
+                    {(runResult.testCases || []).map((tc, i) => (
+                      <div key={i} className="testcase-flat">
+                        <div className="testcase-flat-header">
+                          <div className="testcase-flat-title">Test Case {i + 1}</div>
+                          <div className={`testcase-flat-status ${tc.status_id === 3 ? 'passed' : 'failed'}`}>
+                            {tc.status_id === 3 ? (
+                              <>
+                                <CheckCircle size={14} />
+                                Passed
+                              </>
+                            ) : (
+                              <>
+                                <XCircle size={14} />
+                                Failed
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <div className="mt-4 space-y-2" style={{ color: '#EDEDED' }}>
-                          <p>Test Cases Passed: {submitResult.passedTestCases}/{submitResult.totalTestCases}</p>
-                          <p>Runtime: {submitResult.runtime + " sec"}</p>
-                          <p>Memory: {submitResult.memory + "KB"} </p>
+                        <div className="testcase-flat-body">
+                          <div className="testcase-flat-row">
+                            <span className="testcase-flat-label">Input:</span>
+                            <span className="testcase-flat-value">{tc.stdin}</span>
+                          </div>
+                          <div className="testcase-flat-row">
+                            <span className="testcase-flat-label">Expected:</span>
+                            <span className="testcase-flat-value">{tc.expected_output}</span>
+                          </div>
+                          <div className="testcase-flat-row">
+                            <span className="testcase-flat-label">Output:</span>
+                            <span className="testcase-flat-value">{tc.stdout}</span>
+                          </div>
                         </div>
                       </div>
-                    ) : (
-                      <div>
-                        <div className="flex items-center gap-2 mb-4">
-                          <XCircle className="w-6 h-6" style={{ color: '#ef4444' }} />
-                          <h4 className="font-bold text-lg" style={{ color: '#ef4444' }}>❌ {submitResult.error}</h4>
-                        </div>
-                        <div className="mt-4 space-y-2" style={{ color: '#EDEDED' }}>
-                          <p>Test Cases Passed: {submitResult.passedTestCases}/{submitResult.totalTestCases}</p>
-                        </div>
-                      </div>
-                    )}
+                    ))}
+                  </>
+                ) : (
+                  <div className="console-empty flex items-center justify-center h-full">
+                    <div className="console-empty-text center-unique">
+                      Click <span style={{ color: 'var(--accent-gold)' }}>"Run"</span> to test your code with the example test cases.
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-[#9A9A9A]">
-                  Click "Submit" to submit your solution for evaluation.
-                </div>
-              )}
+                )}
+              </div>
+            )}
+
+            {activeRightTab === 'result' && (
+              <div className="console-content">
+                {submitResult ? (
+                  <div className="result-flat">
+                    <div className="result-flat-header">
+                      {submitResult.accepted ? (
+                        <CheckCircle className="result-flat-icon success" size={24} />
+                      ) : (
+                        <XCircle className="result-flat-icon error" size={24} />
+                      )}
+                      <h4 className={`result-flat-title ${submitResult.accepted ? 'success' : 'error'}`}>
+                        {submitResult.accepted ? 'Accepted' : (submitResult.error || 'Wrong Answer')}
+                      </h4>
+                    </div>
+                    <div className="result-flat-stats">
+                      <div className="result-flat-stat">
+                        <div className="result-flat-stat-label">Test Cases</div>
+                        <div className="result-flat-stat-value">
+                          {submitResult.passedTestCases}/{submitResult.totalTestCases}
+                        </div>
+                      </div>
+                      {submitResult.accepted && (
+                        <>
+                          <div className="result-flat-stat">
+                            <div className="result-flat-stat-label">Runtime</div>
+                            <div className="result-flat-stat-value">{submitResult.runtime} sec</div>
+                          </div>
+                          <div className="result-flat-stat">
+                            <div className="result-flat-stat-label">Memory</div>
+                            <div className="result-flat-stat-value">{submitResult.memory} KB</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="console-empty flex items-center justify-center h-full">
+                    <div className="console-empty-text center-unique">
+                      Click <span style={{ color: 'var(--accent-champagne)' }}>"Submit"</span> to submit your solution for evaluation.
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Console Action Buttons */}
+            <div className="console-actions">
+              <button
+                className="console-btn console-btn-run"
+                onClick={handleRun}
+                disabled={loading}
+              >
+                {loading && activeRightTab === 'testcase' ? (
+                  <>
+                    <div className="console-spinner"></div>
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <Play size={16} />
+                    Run
+                  </>
+                )}
+              </button>
+              <button
+                className="console-btn console-btn-submit"
+                onClick={handleSubmitCode}
+                disabled={loading}
+              >
+                {loading && activeRightTab === 'result' ? (
+                  <>
+                    <div className="console-spinner"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    Submit
+                  </>
+                )}
+              </button>
             </div>
-          )}
+          </div>
         </div>
+
+        {isChatOpen && (
+          <div className="chat-ai-pop-card tab-content-fade flex flex-col">
+            <div className="chat-ai-pop-card-header">
+              <h3 className="section-heading m-0" style={{ fontSize: '0.9rem' }}>Chat AI</h3>
+              <button
+                onClick={() => setIsChatOpen(false)}
+                className="text-[#9A9A9A] hover:text-white transition-colors"
+              >
+                <XCircle size={18} />
+              </button>
+            </div>
+            <div className="chat-ai-pop-card-content">
+              <ChatAi problem={problem}></ChatAi>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
