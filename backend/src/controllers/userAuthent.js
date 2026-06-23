@@ -67,6 +67,11 @@ const login = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        // If user signed up with Google, tell them to use Google Sign-In
+        if (user.authProvider === 'google') {
+            return res.status(400).json({ message: "This account uses Google Sign-In. Please use the Google button to login." });
+        }
+
         const match = await bcrypt.compare(password, user.password);
 
         if (!match) {
@@ -193,10 +198,94 @@ const deleteProfile = async (req, res) => {
     }
 };
 
+/**
+ * GOOGLE LOGIN
+ *
+ * Create-or-update flow:
+ * 1. Firebase token is already verified by firebaseAuth middleware
+ * 2. Look up user by firebaseUid
+ * 3. If not found, look up by email (handles linking existing accounts)
+ * 4. If still not found, create a new user
+ * 5. Issue a JWT cookie (same as regular login)
+ */
+const googleLogin = async (req, res) => {
+    try {
+        const { uid, email, name, picture } = req.firebaseUser;
+
+        // Step 1: Try to find user by Firebase UID (returning Google user)
+        let user = await User.findOne({ firebaseUid: uid });
+
+        if (!user) {
+            // Step 2: Check if a user with this email already exists
+            // (they registered with email/password before)
+            user = await User.findOne({ emailId: email });
+
+            if (user) {
+                // Link existing account with Google
+                user.firebaseUid = uid;
+                user.photoURL = picture || user.photoURL;
+                user.lastLogin = new Date();
+                await user.save();
+            } else {
+                // Step 3: Create a brand new user (first-time Google Sign-In)
+                user = await User.create({
+                    firstName: name?.split(' ')[0] || 'User',
+                    lastName: name?.split(' ').slice(1).join(' ') || undefined,
+                    emailId: email,
+                    authProvider: 'google',
+                    firebaseUid: uid,
+                    photoURL: picture,
+                    role: 'user',
+                    lastLogin: new Date(),
+                });
+            }
+        } else {
+            // Returning Google user — update last login and profile photo
+            user.lastLogin = new Date();
+            user.photoURL = picture || user.photoURL;
+            if (name) {
+                user.firstName = name.split(' ')[0] || user.firstName;
+            }
+            await user.save();
+        }
+
+        // Step 4: Issue YOUR JWT (same as regular login)
+        const token = jwt.sign(
+            { _id: user._id, emailId: user.emailId, role: user.role },
+            process.env.JWT_KEY,
+            { expiresIn: '1h' }
+        );
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 1000,
+        });
+
+        res.status(200).json({
+            user: {
+                firstName: user.firstName,
+                emailId: user.emailId,
+                _id: user._id,
+                role: user.role,
+                photoURL: user.photoURL,
+                authProvider: user.authProvider,
+            },
+            message: 'Google login successful',
+        });
+    } catch (err) {
+        console.error('Google login error:', err);
+        res.status(500).json({
+            message: err.message || 'Google authentication failed',
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
     logout,
     adminRegister,
     deleteProfile,
+    googleLogin,
 };

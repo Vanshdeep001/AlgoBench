@@ -1,9 +1,10 @@
 const express = require('express');
 
 const authRouter = express.Router();
-const { register, login, logout, adminRegister, deleteProfile } = require('../controllers/userAuthent')
+const { register, login, logout, adminRegister, deleteProfile, googleLogin } = require('../controllers/userAuthent')
 const userMiddleware = require("../middleware/userMiddleware");
 const adminMiddleware = require('../middleware/adminMiddleware');
+const verifyFirebaseToken = require('../middleware/firebaseAuth');
 
 // Register
 authRouter.post('/register', register);
@@ -18,6 +19,8 @@ authRouter.get('/check', userMiddleware, (req, res) => {
         emailId: req.result.emailId,
         _id: req.result._id,
         role: req.result.role,
+        photoURL: req.result.photoURL,
+        authProvider: req.result.authProvider,
     }
 
     res.status(200).json({
@@ -25,12 +28,8 @@ authRouter.get('/check', userMiddleware, (req, res) => {
         message: "Valid User"
     });
 })
-// authRouter.get('/getProfile',getProfile);
 
+// Google Sign-In
+authRouter.post('/google-login', verifyFirebaseToken, googleLogin);
 
 module.exports = authRouter;
-
-// login
-// logout
-// GetProfile
-

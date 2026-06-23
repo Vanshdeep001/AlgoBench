@@ -45,8 +45,32 @@ const userSchema = new Schema({
     },
     password: {
         type: String,
-        required: true
-    }
+        required: function() {
+            // Password is required ONLY for email/password users
+            // Google users don't have a password
+            return this.authProvider === 'local';
+        }
+    },
+
+    // Google Auth fields
+    authProvider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local',
+    },
+    firebaseUid: {
+        type: String,
+        unique: true,
+        sparse: true,   // Allows multiple null values (for non-Google users)
+    },
+    photoURL: {
+        type: String,
+        default: null,
+    },
+    lastLogin: {
+        type: Date,
+        default: Date.now,
+    },
 }, {
     timestamps: true
 });
