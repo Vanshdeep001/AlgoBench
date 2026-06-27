@@ -1,0 +1,295 @@
+/* Profile.css */
+
+/* --- Page Background --- */
+.profile-page {
+    min-height: 100vh;
+    background-color: #0B0B0E;
+    /* Original flat dark background */
+    color: #EDEDED;
+    font-family: 'Outfit', sans-serif;
+    padding-bottom: 40px;
+}
+
+/* --- Clean Header --- */
+/* --- Minimalist Header --- */
+.profile-header {
+    background: transparent;
+    /* No card background */
+    border-bottom: none;
+    /* No border */
+    padding: 20px 0;
+    /* Reduced padding */
+    position: relative;
+    z-index: 50;
+}
+
+.profile-header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* --- Modern Circular Avatar --- */
+.profile-avatar-container {
+    position: relative;
+}
+
+.profile-avatar {
+    width: 80px;
+    /* Smaller avatar */
+    height: 80px;
+    border-radius: 50%;
+    background: #18181b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 700;
+    color: #F8FAFC;
+    border: 2px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.profile-avatar:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* User Info */
+.profile-info h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    /* Slightly smaller */
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: #F8FAFC;
+    letter-spacing: -0.5px;
+}
+
+/* Monospace Details */
+.profile-meta {
+    font-family: 'JetBrains Mono', monospace;
+    /* New Font */
+    display: flex;
+    gap: 24px;
+    color: #71717A;
+    /* Zinc 500 */
+    font-size: 13px;
+    font-weight: 500;
+    align-items: center;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.meta-icon {
+    display: none;
+    /* Access removed for cleaner look, or keep minimal */
+}
+
+/* Badge */
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #27272A;
+    color: #E4E4E7;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Badge */
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #F4F4F5;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Action Button */
+.profile-actions {
+    margin-left: auto;
+}
+
+.btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    background: #27272A;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #E4E4E7;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: #3F3F46;
+    color: #FFF;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* --- Layout --- */
+.profile-content {
+    max-width: 1200px;
+    margin: 32px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .profile-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Cards --- */
+.profile-card {
+    background: #18181B;
+    /* Zinc 900 */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.2s ease;
+}
+
+.profile-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.card-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #F8FAFC;
+    margin: 0;
+}
+
+/* --- Heatmap --- */
+.heatmap-grid {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex-direction: column;
+    height: 126px;
+    /* 7 * 14px + 6 * 4px gap approx */
+}
+
+/* --- Modal --- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+    background: #18181B;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: scaleIn 0.2s ease;
+    position: relative;
+}
+
+.close-modal-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: #64748B;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-modal-btn:hover {
+    color: #F8FAFC;
+}
+
+.account-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.account-info-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    color: #64748B;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.info-value {
+    color: #F1F5F9;
+    font-weight: 500;
+    font-size: 15px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

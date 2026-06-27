@@ -211,3 +211,64 @@ ${startCode ? (typeof startCode === 'string' ? startCode : JSON.stringify(startC
 };
 
 module.exports = solveDoubt;
+// Development-only key check endpoint (exports for route)
+async function checkKeys(req, res) {
+    try {
+        const results = {
+            gemini: null,
+            openrouter: []
+        };
+
+        // Test Gemini if key present
+        const geminiKey = getGeminiKey();
+        if (geminiKey) {
+            try {
+                const text = await tryGemini('Health check: respond with "ok".', [
+                    { role: 'user', content: 'Please reply with ok' }
+                ]);
+                results.gemini = text ?? 'No response';
+            } catch (err) {
+                results.gemini = getApiError(err);
+            }
+        } else {
+            results.gemini = 'No Gemini key configured';
+        }
+
+        // Test OpenRouter if configured
+        const hasOpenRouter = !!(process.env.OPENROUTER_API_KEY && process.env.OPENROUTER_API_KEY !== 'your_openrouter_api_key_here');
+        if (hasOpenRouter) {
+            const openRouterMessages = [
+                { role: 'system', content: 'Health check' },
+                { role: 'user', content: 'Please reply with ok' }
+            ];
+            for (const model of OPENROUTER_FREE_MODELS) {
+                try {
+                    const response = await axios.post(
+                        'https://openrouter.ai/api/v1/chat/completions',
+                        { model, messages: openRouterMessages },
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                                'Content-Type': 'application/json'
+                            },
+                            timeout: 10000
+                        }
+                    );
+                    const choice = response.data?.choices?.[0];
+                    const aiMessage = choice?.message?.content ?? choice?.text;
+                    results.openrouter.push({ model, ok: true, message: aiMessage ?? 'No response', raw: process.env.NODE_ENV === 'development' ? response.data : undefined });
+                } catch (err) {
+                    results.openrouter.push({ model, ok: false, error: getApiError(err) });
+                }
+            }
+        } else {
+            results.openrouter = 'No OpenRouter key configured';
+        }
+
+        return res.status(200).json(results);
+    } catch (err) {
+        return res.status(500).json({ error: getApiError(err) });
+    }
+}
+
+module.exports = { solveDoubt, checkKeys };

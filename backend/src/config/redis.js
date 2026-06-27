@@ -1,13 +1,13 @@
 const { createClient } = require('redis');
 
 const redisClient = createClient({
-    username: 'default',
+    username: process.env.REDIS_USER || 'default',
     password: process.env.REDIS_PASS,
     socket: {
-        host: 'redis-19796.c245.us-east-1-3.ec2.cloud.redislabs.com',
-        port: 19796,
+        host: process.env.REDIS_HOST || 'redis-13547.c301.ap-south-1-1.ec2.cloud.redislabs.com',
+        port: parseInt(process.env.REDIS_PORT || '13547', 10),
         reconnectStrategy: (retries) => {
-            if (retries > 20) return new Error('Redis max retries reached');
+            if (retries > 3) return new Error('Redis max retries reached'); // Reduced from 20 for local dev
             return Math.min(retries * 200, 3000);
         }
     }

@@ -55,8 +55,12 @@ const userSchema = new Schema({
     // Google Auth fields
     authProvider: {
         type: String,
-        enum: ['local', 'google'],
+        enum: ['local', 'google', 'github'],
         default: 'local',
+    },
+    githubUsername: {
+        type: String,
+        default: null,
     },
     firebaseUid: {
         type: String,
@@ -66,6 +70,10 @@ const userSchema = new Schema({
     photoURL: {
         type: String,
         default: null,
+    },
+    isPremium: {
+        type: Boolean,
+        default: false,
     },
     lastLogin: {
         type: Date,

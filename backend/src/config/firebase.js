@@ -1,4 +1,5 @@
 const admin = require('firebase-admin');
+const { getAuth } = require('firebase-admin/auth');
 const path = require('path');
 
 // Load service account credentials
@@ -17,8 +18,11 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 // Initialize Firebase Admin (singleton — safe to call once)
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.cert(serviceAccount),
   projectId: 'algobench-4fca6',
 });
 
-module.exports = admin;
+// Export the Auth instance (v14 API)
+const auth = getAuth();
+
+module.exports = auth;

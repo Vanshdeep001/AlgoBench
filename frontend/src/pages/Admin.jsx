@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2, Home, RefreshCw, Zap, Video, Trophy } from 'lucide-react';
 import { NavLink } from 'react-router';
+import SharedNavbar from '../components/SharedNavbar';
+import Sidebar from '../components/admin/Sidebar';
+import ProfileHeader from '../components/admin/ProfileHeader';
+import Heatmap from '../components/admin/Heatmap';
+import ProblemBreakdown from '../components/admin/ProblemBreakdown';
+import RecentActivityTable from '../components/admin/RecentActivityTable';
+import '../styles/admin.css';
 
 function Admin() {
   const [selectedOption, setSelectedOption] = useState(null);
@@ -34,15 +41,6 @@ function Admin() {
       route: '/admin/delete'
     },
     {
-      id: 'video',
-      title: 'Video Problem',
-      description: 'Upload And Delete Videos',
-      icon: Video,
-      color: 'btn-success',
-      bgColor: 'bg-success/10',
-      route: '/admin/video'
-    },
-    {
       id: 'contests',
       title: 'Manage Contests',
       description: 'Create contests, add problems, set schedule and publish',
@@ -54,61 +52,42 @@ function Admin() {
   ];
 
   return (
-    <div className="min-h-screen bg-base-200">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-base-content mb-4">
-            Admin Panel
-          </h1>
-          <p className="text-base-content/70 text-lg">
-            Manage coding problems on your platform
-          </p>
-        </div>
-
-        {/* Admin Options Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {adminOptions.map((option) => {
-            const IconComponent = option.icon;
-            return (
-              <div
-                key={option.id}
-                className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer"
-              >
-                <div className="card-body items-center text-center p-8">
-                  {/* Icon */}
-                  <div className={`${option.bgColor} p-4 rounded-full mb-4`}>
-                    <IconComponent size={32} className="text-base-content" />
-                  </div>
-                  
-                  {/* Title */}
-                  <h2 className="card-title text-xl mb-2">
-                    {option.title}
-                  </h2>
-                  
-                  {/* Description */}
-                  <p className="text-base-content/70 mb-6">
-                    {option.description}
-                  </p>
-                  
-                  {/* Action Button */}
-                  <div className="card-actions">
-                    <div className="card-actions">
-                    <NavLink 
-                    to={option.route}
-                   className={`btn ${option.color} btn-wide`}
-                   >
-                   {option.title}
-                   </NavLink>
-                   </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
+    <div className="admin-root">
+      <SharedNavbar />
+      {/* TEMP: visual marker to confirm redesigned Admin is rendered */}
+      <div style={{ width: '100%', background: 'linear-gradient(90deg, rgba(79,70,229,0.12), rgba(79,70,229,0.06))', color: 'var(--accent)', textAlign:'center', padding:'6px 0', fontWeight:700 }}>
+        ADMIN REDESIGN ACTIVE — Indigo Theme
       </div>
+      <main style={{ paddingTop: 20 }}>
+        <div className="admin-container">
+          <Sidebar />
+          <div className="admin-main">
+            <ProfileHeader stats={{ totalSolved: 0, totalSubmissions: 0, acceptanceRate: '0%' }} />
+
+            <div className="activity-row">
+              <div style={{ flex: 1 }}>
+                <Heatmap weeks={26} rows={7} />
+              </div>
+              <div>
+                <ProblemBreakdown />
+              </div>
+            </div>
+
+            <RecentActivityTable />
+
+            {/* Admin actions - keep existing option links in a compact row */}
+            <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginTop:12 }}>
+              {adminOptions.map(opt => (
+                <NavLink key={opt.id} to={opt.route} className="sidebar-item" style={{ borderLeft:'none', borderRadius:8 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <opt.icon size={16} /> <span style={{ fontWeight:700 }}>{opt.title}</span>
+                  </div>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

@@ -4,6 +4,8 @@ const validate = require("../utils/validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 /**
  * REGISTER
  */
@@ -30,7 +32,8 @@ const register = async (req, res) => {
 
         res.cookie("token", token, {
             httpOnly: true,
-            sameSite: "lax",
+            sameSite: isProduction ? "strict" : "lax",
+            secure: isProduction,
             maxAge: 60 * 60 * 1000,
         });
 
@@ -40,6 +43,7 @@ const register = async (req, res) => {
                 emailId: user.emailId,
                 _id: user._id,
                 role: user.role,
+                isPremium: user.isPremium,
             },
             message: "Registered successfully",
         });
@@ -72,6 +76,11 @@ const login = async (req, res) => {
             return res.status(400).json({ message: "This account uses Google Sign-In. Please use the Google button to login." });
         }
 
+        // If user signed up with GitHub, tell them to use GitHub Sign-In
+        if (user.authProvider === 'github') {
+            return res.status(400).json({ message: "This account uses GitHub Sign-In. Please use the GitHub button to login." });
+        }
+
         const match = await bcrypt.compare(password, user.password);
 
         if (!match) {
@@ -86,7 +95,8 @@ const login = async (req, res) => {
 
         res.cookie("token", token, {
             httpOnly: true,
-            sameSite: "lax",
+            sameSite: isProduction ? "strict" : "lax",
+            secure: isProduction,
             maxAge: 60 * 60 * 1000,
         });
 
@@ -96,6 +106,7 @@ const login = async (req, res) => {
                 emailId: user.emailId,
                 _id: user._id,
                 role: user.role,
+                isPremium: user.isPremium,
             },
             message: "Login successful",
         });
@@ -129,13 +140,15 @@ const logout = async (req, res) => {
         res.cookie("token", null, {
             expires: new Date(0),
             httpOnly: true,
-            sameSite: "lax",
+            sameSite: isProduction ? "strict" : "lax",
+            secure: isProduction,
         });
 
         res.cookie("admin_auth", null, {
             expires: new Date(0),
             httpOnly: true,
-            sameSite: "lax",
+            sameSite: isProduction ? "strict" : "lax",
+            secure: isProduction,
         });
 
         res.status(200).json({ message: "Logged out successfully" });
@@ -258,7 +271,8 @@ const googleLogin = async (req, res) => {
 
         res.cookie('token', token, {
             httpOnly: true,
-            sameSite: 'lax',
+            sameSite: isProduction ? 'strict' : 'lax',
+            secure: isProduction,
             maxAge: 60 * 60 * 1000,
         });
 
@@ -270,6 +284,7 @@ const googleLogin = async (req, res) => {
                 role: user.role,
                 photoURL: user.photoURL,
                 authProvider: user.authProvider,
+                isPremium: user.isPremium,
             },
             message: 'Google login successful',
         });
@@ -281,6 +296,145 @@ const googleLogin = async (req, res) => {
     }
 };
 
+/**
+ * GITHUB LOGIN
+ *
+ * Create-or-update flow (mirrors Google login):
+ * 1. Firebase token is already verified by firebaseAuth middleware
+ * 2. Look up user by firebaseUid
+ * 3. If not found, look up by email (handles linking existing accounts)
+ * 4. If still not found, create a new user
+ * 5. Issue a JWT cookie (same as regular login)
+ *
+ * GitHub-specific handling:
+ * - GitHub username is sent from the frontend (from additionalUserInfo)
+ * - GitHub users may have no public email (we use a fallback)
+ * - GitHub users may have no displayName (we fall back to username)
+ */
+const githubLogin = async (req, res) => {
+    try {
+        const { uid, email, name, picture } = req.firebaseUser;
+        const { githubUsername } = req.body;
+
+        // Handle GitHub users with no public email
+        const userEmail = email || `${uid}@github.noreply.com`;
+
+        // Handle missing displayName — fall back to GitHub username, truncate to fit schema
+        const displayName = name || githubUsername || 'User';
+        const firstName = (displayName.split(' ')[0] || 'User').substring(0, 20);
+
+        // Step 1: Try to find user by Firebase UID (returning GitHub user)
+        let user = await User.findOne({ firebaseUid: uid });
+
+        if (!user) {
+            // Step 2: Check if a user with this email already exists
+            // (they registered with email/password or Google before)
+            user = await User.findOne({ emailId: userEmail });
+
+            if (user) {
+                // Link existing account with GitHub
+                user.firebaseUid = uid;
+                user.photoURL = picture || user.photoURL;
+                user.githubUsername = githubUsername || user.githubUsername;
+                user.lastLogin = new Date();
+                await user.save();
+            } else {
+                // Step 3: Create a brand new user (first-time GitHub Sign-In)
+                user = await User.create({
+                    firstName: firstName,
+                    lastName: displayName.split(' ').slice(1).join(' ').substring(0, 20) || undefined,
+                    emailId: userEmail,
+                    authProvider: 'github',
+                    firebaseUid: uid,
+                    photoURL: picture,
+                    githubUsername: githubUsername || null,
+                    role: 'user',
+                    lastLogin: new Date(),
+                });
+            }
+        } else {
+            // Returning GitHub user — update last login and profile info
+            user.lastLogin = new Date();
+            user.photoURL = picture || user.photoURL;
+            user.githubUsername = githubUsername || user.githubUsername;
+            if (displayName && displayName !== 'User') {
+                user.firstName = firstName;
+            }
+            await user.save();
+        }
+
+        // Step 4: Issue YOUR JWT (same as regular login)
+        const token = jwt.sign(
+            { _id: user._id, emailId: user.emailId, role: user.role },
+            process.env.JWT_KEY,
+            { expiresIn: '1h' }
+        );
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            sameSite: isProduction ? 'strict' : 'lax',
+            secure: isProduction,
+            maxAge: 60 * 60 * 1000,
+        });
+
+        res.status(200).json({
+            user: {
+                firstName: user.firstName,
+                emailId: user.emailId,
+                _id: user._id,
+                role: user.role,
+                photoURL: user.photoURL,
+                authProvider: user.authProvider,
+                githubUsername: user.githubUsername,
+                isPremium: user.isPremium,
+            },
+            message: 'GitHub login successful',
+        });
+    } catch (err) {
+        console.error('GitHub login error:', err);
+        res.status(500).json({
+            message: err.message || 'GitHub authentication failed',
+        });
+    }
+};
+
+/**
+ * SUBSCRIBE
+ */
+const subscribe = async (req, res) => {
+    try {
+        const userId = req.result._id;
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            { isPremium: true },
+            { new: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({
+            user: {
+                firstName: user.firstName,
+                emailId: user.emailId,
+                _id: user._id,
+                role: user.role,
+                photoURL: user.photoURL,
+                authProvider: user.authProvider,
+                githubUsername: user.githubUsername,
+                isPremium: user.isPremium,
+            },
+            message: "Subscribed successfully"
+        });
+    } catch (err) {
+        res.status(500).json({
+            message: err.message || "Subscription failed",
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -288,4 +442,6 @@ module.exports = {
     adminRegister,
     deleteProfile,
     googleLogin,
+    githubLogin,
+    subscribe,
 };

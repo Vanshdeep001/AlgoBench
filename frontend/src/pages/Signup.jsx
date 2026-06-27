@@ -7,6 +7,7 @@ import { useNavigate, NavLink } from 'react-router';
 import { registerUser } from '../authSlice';
 import { ChevronRight, ArrowRight } from 'lucide-react';
 import GoogleLoginButton from '../components/GoogleLoginButton';
+import GithubLoginButton from '../components/GithubLoginButton';
 
 const signupSchema = z.object({
   firstName: z.string().min(3, "Minimum character should be 3"),
@@ -39,7 +40,7 @@ function Signup() {
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] rounded-full blur-[80px] md:blur-[128px]" style={{ backgroundColor: 'rgba(212, 175, 55, 0.04)' }}></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[350px] md:w-[600px] h-[350px] md:h-[600px] rounded-full blur-[80px] md:blur-[128px]" style={{ backgroundColor: 'rgba(212, 175, 55, 0.03)' }}></div>
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-15 brightness-100 contrast-150 mix-blend-overlay"></div>
+        <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-15 brightness-100 contrast-150 mix-blend-overlay"></div>
       </div>
 
       {/* Brand Header (Mobile Only) */}
@@ -84,20 +85,20 @@ function Signup() {
       </div>
 
       {/* Right Column - Premium Form */}
-      <div className="w-full xl:w-1/2 relative z-10 flex flex-col items-center justify-center p-6 md:p-20">
+      <div className="w-full xl:w-1/2 relative z-10 flex flex-col items-center justify-center p-6 md:p-12">
         <div className="w-full max-w-md">
-          <div className="mb-12">
+          <div className="mb-6">
             <h2 className="text-4xl font-creative font-bold tracking-tight text-white mb-2 uppercase">Sign Up</h2>
           </div>
 
           {error && (
-            <div className="mb-8 p-4 border border-red-500/20 bg-red-500/5 text-red-100 text-sm font-sans flex items-center gap-3 animate-[fade-in_0.3s_ease-out]">
+            <div className="mb-4 p-3 border border-red-500/20 bg-red-500/5 text-red-100 text-sm font-sans flex items-center gap-3 animate-[fade-in_0.3s_ease-out]">
               <div className="w-1 h-1 rounded-full bg-red-500 animate-pulse"></div>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="group relative">
               <label className="text-[10px] font-creative font-bold uppercase tracking-[0.2em] text-slate-500 group-focus-within:text-[#D4AF37] transition-colors mb-2 block">
                 Primary Designation (Name)
@@ -105,7 +106,7 @@ function Signup() {
               <input
                 type="text"
                 placeholder="FIRST NAME"
-                className="w-full bg-transparent border-b border-white/10 py-4 font-sans text-white focus:outline-none focus:border-[#D4AF37] transition-all placeholder:text-slate-800"
+                className="w-full bg-transparent border-b border-white/10 py-3 font-sans text-white focus:outline-none focus:border-[#D4AF37] transition-all placeholder:text-slate-800"
                 {...register('firstName')}
               />
               {errors.firstName && (
@@ -120,7 +121,7 @@ function Signup() {
               <input
                 type="email"
                 placeholder="ENGINEER@ALGOBENCH.COM"
-                className="w-full bg-transparent border-b border-white/10 py-4 font-sans text-white focus:outline-none focus:border-[#D4AF37] transition-all placeholder:text-slate-800"
+                className="w-full bg-transparent border-b border-white/10 py-3 font-sans text-white focus:outline-none focus:border-[#D4AF37] transition-all placeholder:text-slate-800"
                 {...register('emailId')}
               />
               {errors.emailId && (
@@ -144,7 +145,7 @@ function Signup() {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••••••"
-                className="w-full bg-transparent border-b border-white/10 py-4 font-sans text-white focus:outline-none focus:border-[#D4AF37] transition-all placeholder:text-slate-800"
+                className="w-full bg-transparent border-b border-white/10 py-3 font-sans text-white focus:outline-none focus:border-[#D4AF37] transition-all placeholder:text-slate-800"
                 {...register('password')}
               />
               {errors.password && (
@@ -152,10 +153,10 @@ function Signup() {
               )}
             </div>
 
-            <div className="pt-8">
+            <div className="pt-4">
               <button
                 type="submit"
-                className="group relative w-full border border-white/10 bg-white/5 py-5 overflow-hidden transition-all hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/5 disabled:opacity-50"
+                className="group relative w-full border border-white/10 bg-white/5 py-4 overflow-hidden transition-all hover:border-[#D4AF37]/50 hover:bg-[#D4AF37]/5 disabled:opacity-50"
                 disabled={loading}
               >
                 <div className="absolute inset-0 w-0 bg-[#D4AF37] transition-all duration-500 group-hover:w-full opacity-10"></div>
@@ -170,7 +171,7 @@ function Signup() {
           </form>
 
           {/* Divider */}
-          <div className="flex items-center gap-4 mt-10">
+          <div className="flex items-center gap-4 mt-5">
             <div className="flex-1 h-px bg-white/5"></div>
             <span className="text-[10px] font-creative font-bold text-slate-700 uppercase tracking-[0.3em]">
               Or
@@ -178,12 +179,13 @@ function Signup() {
             <div className="flex-1 h-px bg-white/5"></div>
           </div>
 
-          {/* Google Sign-In */}
-          <div className="mt-6">
-            <GoogleLoginButton />
+          {/* Social Sign-In */}
+          <div className="mt-4 flex gap-3">
+            <GoogleLoginButton className="flex-1" />
+            <GithubLoginButton className="flex-1" />
           </div>
 
-          <div className="mt-16 pt-8 border-t border-white/5 flex items-center justify-between">
+          <div className="mt-8 pt-5 border-t border-white/5 flex items-center justify-between">
             <span className="text-[10px] font-creative font-bold text-slate-600 uppercase tracking-widest">Already Registered?</span>
             <NavLink to="/login" className="group flex items-center gap-2 text-[10px] font-creative font-bold text-white hover:text-[#D4AF37] transition-colors uppercase tracking-widest">
               Access Portal

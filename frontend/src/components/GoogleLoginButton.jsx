@@ -46,8 +46,8 @@ function GoogleLoginButton({ className = '' }) {
           </svg>
         )}
 
-        <span className="text-[11px] font-creative font-bold uppercase tracking-[0.3em] text-white/80 group-hover:text-white transition-colors">
-          {isLoading ? 'Connecting...' : 'Continue with Google'}
+        <span className="text-[11px] font-creative font-bold uppercase tracking-[0.2em] text-white/80 group-hover:text-white transition-colors whitespace-nowrap">
+          {isLoading ? 'Connecting...' : 'Google'}
         </span>
       </div>
     </button>

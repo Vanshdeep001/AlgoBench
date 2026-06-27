@@ -4,201 +4,246 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchContestById, fetchMyAttempt, startContestAttempt, fetchLeaderboard } from '../contestsSlice';
 import ContestTimer from '../components/ContestTimer';
 import LeaderboardTable from '../components/LeaderboardTable';
-import { Trophy, ListChecks, LayoutList, Play, Loader2, Code } from 'lucide-react';
+import SharedNavbar from '../../../components/SharedNavbar';
+import PublicFooter from '../../../components/PublicFooter';
 import UserDropdown from '../../../components/UserDropdown';
-
-const style = { bg: '#0B0B0E', gold: '#D4AF37', muted: '#9A9A9A', border: '1px solid rgba(212, 175, 55, 0.1)' };
+import './ContestDetails.css';
 
 const tabs = [
-  { id: 'overview', label: 'Overview', icon: LayoutList },
-  { id: 'problems', label: 'Problems', icon: ListChecks },
-  { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+    {
+        id: 'overview',
+        label: 'Overview',
+        icon: () => (
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="12" height="12" rx="1.5" />
+                <path d="M5 6h6M5 9h6" />
+            </svg>
+        ),
+    },
+    {
+        id: 'problems',
+        label: 'Problems',
+        icon: () => (
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 4l-3 4 3 4M11 4l3 4-3 4M7.5 12l1-8" />
+            </svg>
+        ),
+    },
+    {
+        id: 'leaderboard',
+        label: 'Leaderboard',
+        icon: () => (
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 11.5c-1.5 0-2.5-1-2.5-2.5V7c0-.5.5-1 1-1h1.5M12 11.5c1.5 0 2.5-1 2.5-2.5V7c0-.5-.5-1-1-1H12M8 12V14.5M5.5 14.5h5M8 1.5c2.5 0 4 1.5 4 4v4c0 1.5-1.5 2.5-4 2.5s-4-1-4-4v-4c0-2.5 1.5-4 4-4z" />
+            </svg>
+        ),
+    },
 ];
 
 export default function ContestDetails() {
-  const { contestId } = useParams();
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('overview');
-  const dispatch = useDispatch();
-  const { current: contest, attempt, leaderboard, loading, error } = useSelector((state) => state.contests);
-  const { user } = useSelector((state) => state.auth);
-  const [starting, setStarting] = useState(false);
-  const [startError, setStartError] = useState(null);
+    const { contestId } = useParams();
+    const [searchParams] = useSearchParams();
+    const [activeTab, setActiveTab] = useState('overview');
+    const dispatch = useDispatch();
+    const { current: contest, attempt, leaderboard, loading, error } = useSelector((state) => state.contests);
+    const { user } = useSelector((state) => state.auth);
+    const [starting, setStarting] = useState(false);
+    const [startError, setStartError] = useState(null);
 
-  useEffect(() => {
-    if (!contestId) return;
-    dispatch(fetchContestById(contestId));
-    dispatch(fetchMyAttempt(contestId)).catch(() => {});
-  }, [contestId, dispatch]);
+    const myRank = leaderboard?.find((r) => String(r.userId) === String(user?._id));
+    const rank = myRank?.rank ?? '-';
+    const score = attempt?.score ?? myRank?.score ?? 0;
 
-  useEffect(() => {
-    if (!contestId || activeTab !== 'leaderboard') return;
-    dispatch(fetchLeaderboard(contestId));
-    const interval = setInterval(() => dispatch(fetchLeaderboard(contestId)), 15000);
-    return () => clearInterval(interval);
-  }, [contestId, activeTab, dispatch]);
+    useEffect(() => {
+        if (!contestId) return;
+        dispatch(fetchContestById(contestId));
+        dispatch(fetchMyAttempt(contestId)).catch(() => {});
+    }, [contestId, dispatch]);
 
-  const canStart = contest?.status === 'live' && !attempt && !loading;
-  const hasAttempt = attempt && (attempt.status === 'running' || attempt.status === 'submitted' || attempt.status === 'expired');
+    useEffect(() => {
+        if (!contestId || !attempt) return;
+        if (attempt.status === 'submitted' || attempt.status === 'expired') {
+            dispatch(fetchLeaderboard(contestId));
+        }
+    }, [contestId, attempt?.status, dispatch]);
 
-  const handleStart = async () => {
-    if (!canStart || !contestId) return;
-    setStartError(null);
-    setStarting(true);
-    try {
-      const newAttempt = await dispatch(startContestAttempt(contestId)).unwrap();
-      window.location.href = `/contests/${contestId}/arena?attempt=${newAttempt._id}`;
-    } catch (e) {
-      setStartError(e || 'Failed to start');
-    } finally {
-      setStarting(false);
+    useEffect(() => {
+        if (!contestId || activeTab !== 'leaderboard') return;
+        dispatch(fetchLeaderboard(contestId));
+        const interval = setInterval(() => dispatch(fetchLeaderboard(contestId)), 15000);
+        return () => clearInterval(interval);
+    }, [contestId, activeTab, dispatch]);
+
+    const canStart = contest?.status === 'live' && !attempt && !loading;
+    const hasAttempt = attempt && (attempt.status === 'running' || attempt.status === 'submitted' || attempt.status === 'expired');
+
+    const handleStart = async () => {
+        if (!canStart || !contestId) return;
+        setStartError(null);
+        setStarting(true);
+        try {
+            const newAttempt = await dispatch(startContestAttempt(contestId)).unwrap();
+            window.location.href = `/contests/${contestId}/arena?attempt=${newAttempt._id}`;
+        } catch (e) {
+            setStartError(e || 'Failed to start');
+        } finally {
+            setStarting(false);
+        }
+    };
+
+    if (!contest && !loading) {
+        return (
+            <div className="cd-loading-screen">
+                <p className="text-slate-500 font-mono">CONTEST NOT FOUND</p>
+            </div>
+        );
     }
-  };
 
-  if (!contest && !loading) {
+    const startTime = contest?.startTime ? new Date(contest.startTime) : null;
+    const endTime = contest?.endTime || (startTime && contest?.duration ? new Date(startTime.getTime() + contest.duration * 60 * 1000) : null);
+
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: style.bg }}>
-        <p className="text-[#9A9A9A]">Contest not found.</p>
-      </div>
-    );
-  }
+        <div className="cd-root">
+            {/* Background Effects */}
+            <div className="cd-glow-1" />
+            <div className="cd-noise" />
 
-  const startTime = contest?.startTime ? new Date(contest.startTime) : null;
-  const endTime = contest?.endTime || (startTime && contest?.duration ? new Date(startTime.getTime() + contest.duration * 60 * 1000) : null);
+            <SharedNavbar />
 
-  return (
-    <div className="min-h-screen font-sans text-[#EDEDED]" style={{ backgroundColor: style.bg }}>
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] rounded-full blur-[80px]" style={{ backgroundColor: 'rgba(212, 175, 55, 0.06)' }} />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
-      </div>
+            <div className="cd-container">
+                {loading && !contest && (
+                    <div className="flex justify-center py-24">
+                        <div className="cd-spinner" />
+                    </div>
+                )}
 
-      <nav className="relative z-50 border-b py-4" style={{ borderColor: 'rgba(212, 175, 55, 0.1)', backgroundColor: 'rgba(11, 11, 14, 0.9)' }}>
-        <div className="container mx-auto px-4 max-w-7xl flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link to="/problems" className="flex items-center gap-2">
-              <div className="p-2 rounded-xl" style={{ backgroundColor: style.bg, border: style.border }}>
-                <Code className="w-5 h-5" style={{ color: style.gold }} />
-              </div>
-              <span className="text-lg font-display font-bold text-white">AlgoBench</span>
-            </Link>
-            <NavLink to="/contests" className="text-sm font-medium" style={{ color: style.gold }}>Contests</NavLink>
-            <NavLink to="/problems" className="text-sm font-medium hover:text-[#D4AF37] transition-colors" style={{ color: style.muted }}>Problems</NavLink>
-          </div>
-          <UserDropdown user={user} />
+                {contest && (
+                    <>
+                        <div className="cd-header">
+                            <div className="cd-header-left">
+                                <h1 className="cd-title">{contest.title}</h1>
+                            </div>
+                            <div className="cd-header-right">
+                                {contest.status === 'live' && (
+                                    <ContestTimer endTime={endTime} compact />
+                                )}
+                                {contest.status === 'upcoming' && endTime && (
+                                    <ContestTimer endTime={startTime} compact />
+                                )}
+                                {canStart && (
+                                    <button
+                                        onClick={handleStart}
+                                        disabled={starting}
+                                        className="cd-btn start"
+                                    >
+                                        {starting ? (
+                                            <div className="w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin" />
+                                        ) : (
+                                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                                <path d="M3 2l10 6-10 6V2z" />
+                                            </svg>
+                                        )}
+                                        <span>Start Contest</span>
+                                    </button>
+                                )}
+                                {hasAttempt && attempt?.status === 'running' && (
+                                    <Link
+                                        to={`/contests/${contestId}/arena?attempt=${attempt._id}`}
+                                        className="cd-btn enter"
+                                    >
+                                        Enter Arena
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Telemetry Stream */}
+                        <div className="cd-data-stream">
+                            <div className="cd-stream-item">
+                                <span className="cd-stream-label">STATUS</span>
+                                <span className={`cd-stream-value status-${contest.status}`}>{contest.status.toUpperCase()}</span>
+                            </div>
+                            <div className="cd-stream-item">
+                                <span className="cd-stream-label">START TIME</span>
+                                <span className="cd-stream-value">{startTime ? startTime.toLocaleString() : 'N/A'}</span>
+                            </div>
+                            <div className="cd-stream-item">
+                                <span className="cd-stream-label">DURATION</span>
+                                <span className="cd-stream-value">{contest.duration} MIN</span>
+                            </div>
+                            <div className="cd-stream-item">
+                                <span className="cd-stream-label">PROBLEMS</span>
+                                <span className="cd-stream-value">{contest.problems?.length || 0}</span>
+                            </div>
+                            {hasAttempt && (attempt?.status === 'submitted' || attempt?.status === 'expired') && (
+                                <>
+                                    <div className="cd-stream-item">
+                                        <span className="cd-stream-label">YOUR RANK</span>
+                                        <span className="cd-stream-value">{rank}</span>
+                                    </div>
+                                    <div className="cd-stream-item">
+                                        <span className="cd-stream-label">YOUR SCORE</span>
+                                        <span className="cd-stream-value">{score}</span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {startError && <p className="text-xs font-mono text-red-400 mb-4">{startError}</p>}
+                        {error && <p className="text-xs font-mono text-red-400 mb-4">{error}</p>}
+
+                        <div className="cd-tabs-deck">
+                            {tabs.map(({ id, label, icon: Icon }) => (
+                                <button
+                                    key={id}
+                                    onClick={() => setActiveTab(id)}
+                                    className={`cd-tab-trigger ${activeTab === id ? 'active' : ''}`}
+                                >
+                                    <Icon />
+                                    <span>{label}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="cd-content-area">
+                            {activeTab === 'overview' && (
+                                <div>
+                                    {contest.description && (
+                                        <p className="cd-overview-text">{contest.description}</p>
+                                    )}
+                                    <div className="cd-specs-grid">
+                                        <div className="cd-spec-card">
+                                            <span className="cd-spec-title">SCORING PROTOCOL</span>
+                                            <p className="cd-spec-desc">First accepted run yields full score (100 pts per problem). No penalty points are assessed for wrong submittals.</p>
+                                        </div>
+                                        <div className="cd-spec-card">
+                                            <span className="cd-spec-title">ARENA ACCESS</span>
+                                            <p className="cd-spec-desc">Once started, the countdown is continuous and cannot be paused. Ensure a stable connection before uplinking.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'problems' && (
+                                <ul className="cd-prob-list">
+                                    {contest.problems?.map((p, i) => (
+                                        <li key={p._id} className="cd-prob-item">
+                                            <span className="cd-prob-number">{String(i + 1).padStart(2, '0')}</span>
+                                            <span className="cd-prob-title">{p.title}</span>
+                                            <span className={`cd-prob-difficulty ${p.difficulty?.toLowerCase() || 'easy'}`}>{p.difficulty || 'Easy'}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+
+                            {activeTab === 'leaderboard' && (
+                                <LeaderboardTable leaderboard={leaderboard} currentUserId={user?._id} />
+                            )}
+                        </div>
+                    </>
+                )}
+            </div>
+            <PublicFooter />
         </div>
-      </nav>
-
-      <div className="relative z-10 pt-8 pb-20 px-4 container mx-auto max-w-5xl">
-        {loading && !contest && (
-          <div className="flex justify-center py-16">
-            <div className="w-10 h-10 border-4 border-t-[#D4AF37] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
-          </div>
-        )}
-
-        {contest && (
-          <>
-            <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-display font-bold text-white mb-2">{contest.title}</h1>
-                <p className="text-sm font-mono" style={{ color: style.muted }}>
-                  Starts {startTime?.toLocaleString()} · Duration {contest.duration} min
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                {contest.status === 'live' && (
-                  <ContestTimer endTime={endTime} compact />
-                )}
-                {contest.status === 'upcoming' && endTime && (
-                  <ContestTimer endTime={startTime} compact />
-                )}
-                {canStart && (
-                  <button
-                    onClick={handleStart}
-                    disabled={starting}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition-all"
-                    style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', border: '1px solid rgba(34, 197, 94, 0.4)', color: '#22c55e' }}
-                  >
-                    {starting ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} />}
-                    Start Contest
-                  </button>
-                )}
-                {hasAttempt && attempt?.status === 'running' && (
-                  <Link
-                    to={`/contests/${contestId}/arena?attempt=${attempt._id}`}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold"
-                    style={{ backgroundColor: 'rgba(212, 175, 55, 0.15)', border: style.border, color: style.gold }}
-                  >
-                    Enter Arena
-                  </Link>
-                )}
-                {hasAttempt && (attempt?.status === 'submitted' || attempt?.status === 'expired') && (
-                  <Link
-                    to={`/contests/${contestId}/result`}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold"
-                    style={{ backgroundColor: 'rgba(212, 175, 55, 0.15)', border: style.border, color: style.gold }}
-                  >
-                    View Result
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {startError && <p className="text-sm text-red-400 mb-4">{startError}</p>}
-            {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
-
-            <div className="flex gap-1 mb-6" style={{ borderBottom: style.border }}>
-              {tabs.map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setActiveTab(id)}
-                  className="px-4 py-3 text-sm font-semibold transition-all border-b-2 -mb-px"
-                  style={{
-                    color: activeTab === id ? style.gold : style.muted,
-                    borderColor: activeTab === id ? style.gold : 'transparent',
-                  }}
-                >
-                  <span className="flex items-center gap-2">
-                    <Icon size={18} />
-                    {label}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {activeTab === 'overview' && (
-              <div className="prose max-w-none">
-                {contest.description && (
-                  <p className="whitespace-pre-wrap text-sm mb-6" style={{ color: '#EDEDED' }}>{contest.description}</p>
-                )}
-                <p className="text-sm" style={{ color: style.muted }}>
-                  {contest.problems?.length || 0} problems · First accepted = full score (100 per problem). No penalty for wrong submissions.
-                </p>
-              </div>
-            )}
-
-            {activeTab === 'problems' && (
-              <ul className="space-y-2">
-                {contest.problems?.map((p, i) => (
-                  <li
-                    key={p._id}
-                    className="flex items-center justify-between rounded-lg px-4 py-3"
-                    style={{ backgroundColor: 'rgba(20, 20, 25, 0.95)', border: style.border }}
-                  >
-                    <span className="font-mono text-sm" style={{ color: style.muted }}>{i + 1}.</span>
-                    <span className="flex-1 mx-4 text-white font-medium">{p.title}</span>
-                    <span className="text-xs px-2 py-1 rounded" style={{ color: '#9A9A9A', backgroundColor: 'rgba(148,163,184,0.15)' }}>{p.difficulty}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {activeTab === 'leaderboard' && (
-              <LeaderboardTable leaderboard={leaderboard} currentUserId={user?._id} />
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
+    );
 }

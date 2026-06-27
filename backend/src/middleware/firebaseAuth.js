@@ -1,11 +1,11 @@
-const admin = require('../config/firebase');
+const auth = require('../config/firebase');
 
 /**
  * Middleware to verify Firebase ID tokens sent in the request body.
  * 
- * Usage: For the /google-login route where the client sends a Firebase ID token.
- * This is NOT a replacement for userMiddleware — it's used specifically
- * for the Google login flow.
+ * Usage: For the /google-login and /github-login routes where the client
+ * sends a Firebase ID token. This is NOT a replacement for userMiddleware —
+ * it's used specifically for the social login flows.
  * 
  * After verification, attaches decoded token to req.firebaseUser:
  *   - uid: Firebase user ID
@@ -24,7 +24,7 @@ const verifyFirebaseToken = async (req, res, next) => {
 
     // Verify the token with Firebase Admin SDK
     // This checks: signature, expiration, audience, issuer
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const decodedToken = await auth.verifyIdToken(idToken);
 
     // Attach decoded user info to request
     req.firebaseUser = {

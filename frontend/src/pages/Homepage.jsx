@@ -1,440 +1,713 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { NavLink } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import axiosClient from '../utils/axiosClient';
-import { logoutUser } from '../authSlice';
-import { Code, Search, Trophy, TrendingUp, Target, CheckCircle2, Menu, X, BookOpen, Sparkles } from 'lucide-react';
-import UserDropdown from '../components/UserDropdown';
+import { logoutUser, subscribeUser } from '../authSlice';
+import { ExternalLink, Lock, Crown, X, ChevronDown } from 'lucide-react';
+import SharedNavbar from '../components/SharedNavbar';
+import PublicFooter from '../components/PublicFooter';
+import { DSA_PATTERNS } from '../data/dsaPatterns';
+import '../styles/homepage-redesign.css';
+
+const PAGE_SIZE = 500;
+
+const ALLOWED_TOPICS = [
+  { display: 'Arrays', value: 'Array' },
+  { display: 'String', value: 'String' },
+  { display: 'Binary Search', value: 'Binary Search' },
+  { display: 'Linked List', value: 'Linked List' },
+  { display: 'Stack', value: 'Stack' },
+  { display: 'Queue', value: 'Queue' },
+  { display: 'Tree', value: 'Tree' },
+  { display: 'Graph', value: 'Graph' },
+  { display: 'DP', value: 'Dynamic Programming' }
+];
 
 function Homepage() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const [problems, setProblems] = useState([]);
   const [solvedProblems, setSolvedProblems] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loadingList, setLoadingList] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [filters, setFilters] = useState({
     difficulty: 'all',
-    tag: 'all',
-    status: 'all'
+    topic: 'all',
+    status: 'all',
+    type: 'solvable',
+    company: 'all',
+    pattern: 'all',
   });
+  const [sortBy, setSortBy] = useState('default');
+  const [selectedProblemCompanies, setSelectedProblemCompanies] = useState(null);
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
+  const companyDropdownRef = useRef(null);
+  const [isPatternDropdownOpen, setIsPatternDropdownOpen] = useState(false);
+  const patternDropdownRef = useRef(null);
 
+  // Fetch the company list once (for the dropdown)
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const fetchProblems = async () => {
+    const fetchCompanies = async () => {
       try {
-        const { data } = await axiosClient.get('/problem/getAllProblem');
-        setProblems(data);
+        const { data } = await axiosClient.get('/problem/companies');
+        setCompanies(data || []);
       } catch (error) {
-        console.error('Error fetching problems:', error);
+        console.error('Error fetching companies:', error);
       }
     };
+    fetchCompanies();
+  }, []);
 
+  // Close custom dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) {
+        setIsCompanyDropdownOpen(false);
+      }
+      if (patternDropdownRef.current && !patternDropdownRef.current.contains(event.target)) {
+        setIsPatternDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Fetch problems. Company is filtered server-side (companies arrays aren't sent
+  // to the client); everything else is filtered client-side below.
+   useEffect(() => {
+    const fetchProblems = async () => {
+      setLoadingList(true);
+      try {
+        const params = {};
+        if (filters.company !== 'all') params.company = filters.company;
+        console.log('fetchProblems calling API with params:', params);
+        const { data } = await axiosClient.get('/problem/getAllProblem', { params });
+        console.log('fetchProblems received data length:', data?.length);
+        setProblems(data || []);
+      } catch (error) {
+        console.error('Error fetching problems:', error);
+        setProblems([]);
+      } finally {
+        setLoadingList(false);
+      }
+    };
+    fetchProblems();
+  }, [filters.company]);
+
+  useEffect(() => {
     const fetchSolvedProblems = async () => {
       try {
         const { data } = await axiosClient.get('/problem/problemSolvedByUser');
-        setSolvedProblems(data);
+        setSolvedProblems(data || []);
       } catch (error) {
         console.error('Error fetching solved problems:', error);
       }
     };
-
-    fetchProblems();
     if (user) fetchSolvedProblems();
   }, [user]);
+
+  // Reset pagination whenever filters/search/sortBy change
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [filters, searchQuery, sortBy]);
 
   const handleLogout = () => {
     dispatch(logoutUser());
     setSolvedProblems([]);
   };
 
-  const filteredProblems = problems.filter(problem => {
-    const difficultyMatch = filters.difficulty === 'all' || problem.difficulty === filters.difficulty;
-    const tagMatch = filters.tag === 'all' || problem.tags === filters.tag;
-    const statusMatch = filters.status === 'all' || solvedProblems.some(sp => sp._id === problem._id);
-    const searchMatch = problem.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return difficultyMatch && tagMatch && statusMatch && searchMatch;
-  });
+  const handleSubscribe = async () => {
+    if (!window.Razorpay) {
+      alert('Razorpay SDK failed to load. Please check your internet connection.');
+      return;
+    }
+
+    try {
+      // Step 1: Create a Razorpay Order on the backend
+      const { data } = await axiosClient.post('/payment/create-order');
+      const { orderId, keyId, amount, currency } = data;
+
+      // Step 2: Open Razorpay checkout options
+      const options = {
+        key: keyId,
+        amount: amount,
+        currency: currency,
+        name: 'AlgoBench',
+        description: 'Premium Subscription Upgrade',
+        order_id: orderId,
+        handler: async (response) => {
+          try {
+            // Step 3: Verify signature and update premium status
+            await dispatch(subscribeUser({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            })).unwrap();
+            setShowPremiumModal(false);
+          } catch (err) {
+            console.error('Payment verification failed:', err);
+            alert(err.message || 'Payment verification failed. Please contact support.');
+          }
+        },
+        prefill: {
+          name: user ? user.firstName : '',
+          email: user ? user.emailId : '',
+        },
+        theme: {
+          color: '#D4AF37',
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error('Order creation failed:', error);
+      alert(error.response?.data?.message || error.message || 'Failed to initialize payment');
+    }
+  };
+
+  const solvableSlugs = useMemo(() => {
+    const set = new Set();
+    problems.forEach((p) => {
+      if (p.problemType !== 'catalog' && p.slug) {
+        set.add(p.slug);
+      }
+    });
+    return set;
+  }, [problems]);
+
+  const filteredProblems = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    console.log('--- PATTERN FILTER DIAGNOSIS ---');
+    console.log('Current selected pattern filter:', filters.pattern);
+    console.log('Total problems array length:', problems.length);
+    if (problems.length > 0) {
+      console.log('First 5 problems in state:', JSON.stringify(problems.slice(0, 5).map(p => ({ title: p.title, slug: p.slug }))));
+    }
+    console.log('Selected pattern slugs list:', JSON.stringify(DSA_PATTERNS[filters.pattern]));
+
+    return problems.filter((problem) => {
+      const isCatalog = problem.problemType === 'catalog';
+      if (isCatalog && problem.slug && solvableSlugs.has(problem.slug)) {
+        return false;
+      }
+
+      const difficultyMatch = filters.difficulty === 'all' || problem.difficulty === filters.difficulty;
+
+      let topicMatch = false;
+      if (filters.topic === 'all') {
+        topicMatch = true;
+      } else {
+        const problemTopics = problem.topics || [];
+        if (filters.topic === 'Tree') {
+          topicMatch = problemTopics.includes('Tree') ||
+            problemTopics.includes('Binary Tree') ||
+            problemTopics.includes('Binary Search Tree');
+        } else if (filters.topic === 'Graph') {
+          topicMatch = problemTopics.includes('Graph') ||
+            problemTopics.includes('Depth-First Search') ||
+            problemTopics.includes('Breadth-First Search');
+        } else {
+          topicMatch = problemTopics.includes(filters.topic);
+        }
+      }
+
+      let typeMatch = false;
+      if (filters.status === 'catalog') {
+        typeMatch = isCatalog;
+      } else if (filters.company !== 'all' || filters.pattern !== 'all') {
+        typeMatch = true;
+      } else {
+        typeMatch =
+          filters.type === 'all' ||
+          (filters.type === 'solvable' && !isCatalog) ||
+          (filters.type === 'catalog' && isCatalog);
+      }
+
+      let statusMatch = false;
+      if (filters.status === 'all') {
+        statusMatch = true;
+      } else if (filters.status === 'solved') {
+        statusMatch = solvedProblems.some((sp) => sp._id === problem._id);
+      } else if (filters.status === 'catalog') {
+        statusMatch = isCatalog;
+      }
+
+      let patternMatch = true;
+      if (filters.pattern !== 'all') {
+        const patternSlugs = DSA_PATTERNS[filters.pattern] || [];
+        const slugLower = (problem.slug || '').toLowerCase();
+        patternMatch = patternSlugs.includes(slugLower);
+      }
+
+      const searchMatch = problem.title.toLowerCase().includes(q);
+      return difficultyMatch && topicMatch && typeMatch && statusMatch && searchMatch && patternMatch;
+    });
+  }, [problems, filters, searchQuery, solvedProblems]);
+
+  const sortedAndFilteredProblems = useMemo(() => {
+    let result = [...filteredProblems];
+    if (sortBy === 'companies') {
+      result.sort((a, b) => {
+        const countA = a.companyCount || a.companies?.length || 0;
+        const countB = b.companyCount || b.companies?.length || 0;
+        return countB - countA;
+      });
+    }
+    return result;
+  }, [filteredProblems, sortBy]);
+
+  const visibleProblems = sortedAndFilteredProblems.slice(0, visibleCount);
 
   const stats = {
     totalSolved: solvedProblems.length,
-    totalProblems: problems.length,
-    accuracy: problems.length > 0 ? Math.round((solvedProblems.length / problems.length) * 100) : 0
+    totalProblems: problems.filter(p => p.problemType !== 'catalog' || !p.slug || !solvableSlugs.has(p.slug)).length,
+    matching: sortedAndFilteredProblems.length,
   };
 
   return (
-    <div className="min-h-screen font-sans text-[#EDEDED] selection:bg-[#D4AF37]/30" style={{ backgroundColor: '#0B0B0E' }}>
-      {/* Background Effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[300px] md:w-[500px] h-[300px] md:h-[500px] rounded-full blur-[80px] md:blur-[128px] animate-pulse" style={{ backgroundColor: 'rgba(212, 175, 55, 0.08)' }}></div>
-        <div className="absolute top-[40%] right-[-10%] w-[250px] md:w-[400px] h-[250px] md:h-[400px] rounded-full blur-[80px] md:blur-[128px] animate-pulse delay-1000" style={{ backgroundColor: 'rgba(184, 150, 46, 0.06)' }}></div>
-        <div className="absolute bottom-[-10%] left-[20%] w-[350px] md:w-[600px] h-[350px] md:h-[600px] rounded-full blur-[80px] md:blur-[128px]" style={{ backgroundColor: 'rgba(212, 175, 55, 0.04)' }}></div>
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
-      </div>
+    <div className="hp-root">
+      <div className="hp-hud-bg"></div>
+      <SharedNavbar />
 
-      {/* Navbar */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'py-4' : 'py-6'}`}>
-        <div className="container mx-auto px-4">
-          <div className={`mx-auto max-w-7xl rounded-full backdrop-blur-md transition-all duration-300`} style={{ border: `1px solid rgba(255,255,255,${scrolled ? '0.1' : '0.08'})`, backgroundColor: scrolled ? 'rgba(11, 11, 14, 0.8)' : 'transparent', boxShadow: scrolled ? '0 10px 40px -10px rgba(212, 175, 55, 0.1)' : 'none', padding: scrolled ? '0.75rem 1.5rem' : '0.5rem 1rem' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl" style={{ backgroundColor: '#0B0B0E', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <Code className="w-5 h-5" style={{ color: '#D4AF37' }} />
-                </div>
-                <span className="text-lg md:text-xl font-display font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                  AlgoBench
-                </span>
-              </div>
+      <div className="hp-container">
+        {/* Header Section */}
+        <header className="hp-header">
+          <h1 className="hp-title">
+            <span>Practice</span>
+            <span>& Progress</span>
+          </h1>
+          <p className="hp-description">
+            Browse {stats.totalProblems.toLocaleString()} problems from the company-wise interview archive.
+            Filter by company, topic and difficulty to isolate the exact set you want to drill.
+          </p>
+        </header>
 
-              {/* Desktop Menu */}
-              <div className="hidden md:flex items-center gap-8 text-sm font-medium" style={{ color: '#9A9A9A' }}>
-                <NavLink to="/problems" className="text-white transition-colors">Problems</NavLink>
-                <NavLink to="/contests" className="hover:text-white transition-colors">Contests</NavLink>
-                <NavLink to="/community" className="hover:text-white transition-colors">Community</NavLink>
-                <NavLink to="/visualizer" className="hover:text-white transition-colors">Visualizer</NavLink>
-              </div>
-
-              <div className="hidden md:flex items-center gap-3">
-                <UserDropdown user={user} />
-              </div>
-
-              {/* Mobile Menu Toggle */}
-              <button className="md:hidden p-2 text-slate-300 hover:text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </div>
+        {/* Data Stream */}
+        <div className="hp-data-stream">
+          <div className="hp-stream-item">
+            <span className="hp-stream-label">SOLVED</span>
+            <span className="hp-stream-value">{stats.totalSolved}</span>
+          </div>
+          <div className="hp-stream-item">
+            <span className="hp-stream-label">IN VIEW</span>
+            <span className="hp-stream-value">{stats.matching.toLocaleString()}</span>
+          </div>
+          <div className="hp-stream-item">
+            <span className="hp-stream-label">ARCHIVE</span>
+            <span className="hp-stream-value">{stats.totalProblems.toLocaleString()}</span>
           </div>
         </div>
-      </nav>
 
-      {/* Mobile Menu Overlay */}
-      <div className={`fixed inset-0 z-40 backdrop-blur-xl md:hidden transition-all duration-300 ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`} style={{ backgroundColor: 'rgba(11, 11, 14, 0.95)' }}>
-        <div className="flex flex-col items-center justify-center h-full gap-8 p-6">
-          <NavLink to="/problems" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-white">Problems</NavLink>
-          <NavLink to="/contests" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Contests</NavLink>
-          <NavLink to="/community" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Community</NavLink>
-          <NavLink to="/visualizer" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-display font-bold text-slate-300 hover:text-white">Visualizer</NavLink>
-          <div className="w-16 h-px my-4" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-          <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="text-xl font-medium text-slate-300 hover:text-white">Logout</button>
-          {user?.role === 'admin' && <NavLink to="/admin" onClick={() => setMobileMenuOpen(false)} className="text-xl font-medium text-slate-300 hover:text-white">Admin</NavLink>}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="relative z-10 pt-32 pb-20 px-4">
-        <div className="container mx-auto max-w-7xl">
-          {/* Header Section */}
-          <div className="mb-14">
-            <p className="text-sm font-mono uppercase tracking-[0.2em] mb-3" style={{ color: 'rgba(212, 175, 55, 0.9)' }}>
-              Problem Set
-            </p>
-            <h1 className="text-4xl md:text-6xl font-display font-bold mb-5 tracking-tight">
-              <span className="bg-gradient-to-r bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(120deg, #FFFFFF 0%, #E8E0C8 40%, #D4AF37 100%)' }}>
-                Practice & Progress
-              </span>
-            </h1>
-            <p className="text-lg max-w-xl font-mono" style={{ color: '#9A9A9A' }}>
-              Master algorithms one problem at a time. Filter by difficulty, tag, or status and track your progress.
-            </p>
+        {/* Search and Filters */}
+        <div className="hp-archive-controls">
+          <div className="hp-search-container">
+            <input
+              type="text"
+              placeholder="Search problems..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="hp-search-input"
+            />
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <StatsCard icon={<Trophy className="w-6 h-6" style={{ color: '#D4AF37' }} />} label="Solved" value={`${stats.totalSolved} / ${stats.totalProblems}`} />
-            <StatsCard icon={<Target className="w-6 h-6" style={{ color: '#B8962E' }} />} label="Completion" value={`${stats.accuracy}%`} />
-            <StatsCard icon={<Sparkles className="w-6 h-6" style={{ color: '#D4AF37' }} />} label="Next up" value={stats.totalProblems - stats.totalSolved > 0 ? `${stats.totalProblems - stats.totalSolved} left` : 'All done'} />
-          </div>
+          <div className="hp-filter-bar">
+            <select
+              className="hp-filter-select"
+              value={filters.topic}
+              onChange={(e) => setFilters({ ...filters, topic: e.target.value })}
+            >
+              <option value="all">All Topics</option>
+              {ALLOWED_TOPICS.map((t) => (
+                <option key={t.value} value={t.value}>{t.display}</option>
+              ))}
+            </select>
 
-          {/* Search and Filters */}
-          <div className="mb-8">
-            <p className="text-xs font-mono uppercase tracking-wider mb-4" style={{ color: '#9A9A9A' }}>Search & filter</p>
-            <div className="relative mb-6">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: '#9A9A9A' }} />
-              <input
-                type="text"
-                placeholder="Search problems..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 rounded-2xl text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-2 font-mono"
-                style={{
-                  backgroundColor: 'rgba(20, 20, 25, 0.6)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  backdropFilter: 'blur(20px)',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
-                }}
-                onFocus={(e) => e.target.style.borderColor = 'rgba(212, 175, 55, 0.5)'}
-                onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-              />
-            </div>
+            <select
+              className="hp-filter-select"
+              value={filters.difficulty}
+              onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
+            >
+              <option value="all">All Levels</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
 
-            {/* Filter Pills */}
-            <div className="flex flex-wrap gap-4">
-              {/* Status Filter */}
-              <select
-                className="px-5 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 hover:border-[#D4AF37]"
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                style={{
-                  backgroundColor: 'rgba(20, 20, 25, 0.8)',
-                  border: '1px solid rgba(212, 175, 55, 0.2)',
-                  color: '#EDEDED',
-                  backdropFilter: 'blur(20px)',
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
-                  minWidth: '160px'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = 'rgba(212, 175, 55, 0.5)';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.1), 0 4px 16px rgba(0, 0, 0, 0.3)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = 'rgba(212, 175, 55, 0.2)';
-                  e.target.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.3)';
-                }}
-              >
-                <option value="all">All Problems</option>
-                <option value="solved">Solved</option>
-              </select>
+            <select
+              className="hp-filter-select"
+              value={filters.status}
+              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+            >
+              <option value="all">All Status</option>
+              <option value="solved">Solved</option>
+              <option value="catalog">Catalog</option>
+            </select>
 
-              {/* Difficulty Filter */}
-              <select
-                className="px-5 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 hover:border-[#D4AF37]"
-                value={filters.difficulty}
-                onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
-                style={{
-                  backgroundColor: 'rgba(20, 20, 25, 0.8)',
-                  border: '1px solid rgba(212, 175, 55, 0.2)',
-                  color: '#EDEDED',
-                  backdropFilter: 'blur(20px)',
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
-                  minWidth: '180px'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = 'rgba(212, 175, 55, 0.5)';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.1), 0 4px 16px rgba(0, 0, 0, 0.3)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = 'rgba(212, 175, 55, 0.2)';
-                  e.target.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.3)';
-                }}
-              >
-                <option value="all">All Difficulties</option>
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-
-              {/* Tag Filter */}
-              <select
-                className="px-5 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer focus:outline-none focus:ring-2 hover:border-[#D4AF37]"
-                value={filters.tag}
-                onChange={(e) => setFilters({ ...filters, tag: e.target.value })}
-                style={{
-                  backgroundColor: 'rgba(20, 20, 25, 0.8)',
-                  border: '1px solid rgba(212, 175, 55, 0.2)',
-                  color: '#EDEDED',
-                  backdropFilter: 'blur(20px)',
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
-                  minWidth: '160px'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = 'rgba(212, 175, 55, 0.5)';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.1), 0 4px 16px rgba(0, 0, 0, 0.3)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = 'rgba(212, 175, 55, 0.2)';
-                  e.target.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.3)';
-                }}
-              >
-                <option value="all">All Tags</option>
-                <option value="array">Array</option>
-                <option value="linkedList">Linked List</option>
-                <option value="graph">Graph</option>
-                <option value="dp">DP</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Problems Table */}
-          <div className="rounded-2xl overflow-hidden relative" style={{
-            background: 'linear-gradient(165deg, rgba(22, 22, 28, 0.98) 0%, rgba(15, 15, 20, 0.99) 100%)',
-            border: '1px solid rgba(212, 175, 55, 0.12)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.03)'
-          }}>
-            <div className="absolute top-0 left-0 right-0 h-px rounded-t-2xl" style={{ background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.35), transparent)' }} />
-            {filteredProblems.length === 0 ? (
-              <div className="text-center py-24 px-6">
-                <div className="inline-flex p-4 rounded-2xl mb-5" style={{ backgroundColor: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.15)' }}>
-                  <BookOpen className="w-14 h-14" style={{ color: '#9A9A9A' }} />
+            {user?.isPremium ? (
+              <div className="hp-premium-hud-bar">
+                <div className="hp-hud-badge">
+                  <Crown size={12} style={{ color: '#D4AF37' }} />
                 </div>
-                <p className="text-xl font-display font-semibold text-white/90 mb-2">No problems match your filters</p>
-                <p className="text-sm font-mono max-w-sm mx-auto" style={{ color: '#9A9A9A' }}>Try adjusting search or filter criteria to see more problems.</p>
+
+                <div className="hp-hud-control">
+                  <select
+                    className="hp-hud-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                  >
+                    <option value="default">Default Sort</option>
+                    <option value="companies">Most Companies</option>
+                  </select>
+                </div>
+
+                <div className="hp-hud-divider"></div>
+
+                <div className="hp-hud-control" ref={companyDropdownRef}>
+                  <button
+                    type="button"
+                    className="hp-hud-btn"
+                    onClick={() => setIsCompanyDropdownOpen(!isCompanyDropdownOpen)}
+                  >
+                    <span>{filters.company === 'all' ? 'Companies' : filters.company}</span>
+                    <ChevronDown size={12} style={{ opacity: 0.7 }} />
+                  </button>
+                  {isCompanyDropdownOpen && (
+                    <div className="hp-custom-dropdown-menu">
+                      <div
+                        className="hp-custom-dropdown-item"
+                        onClick={() => {
+                          setFilters({ ...filters, company: 'all' });
+                          setIsCompanyDropdownOpen(false);
+                        }}
+                      >
+                        Companies
+                      </div>
+                      {companies.map((c) => (
+                        <div
+                          key={c}
+                          className="hp-custom-dropdown-item"
+                          onClick={() => {
+                            setFilters({ ...filters, company: c });
+                            setIsCompanyDropdownOpen(false);
+                          }}
+                        >
+                          {c}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="hp-hud-divider"></div>
+
+                <div className="hp-hud-control" ref={patternDropdownRef}>
+                  <button
+                    type="button"
+                    className="hp-hud-btn"
+                    onClick={() => setIsPatternDropdownOpen(!isPatternDropdownOpen)}
+                  >
+                    <span>{filters.pattern === 'all' ? 'Patterns' : filters.pattern}</span>
+                    <ChevronDown size={12} style={{ opacity: 0.7 }} />
+                  </button>
+                  {isPatternDropdownOpen && (
+                    <div className="hp-custom-dropdown-menu hp-patterns-dropdown-menu">
+                      <div
+                        className="hp-custom-dropdown-item"
+                        onClick={() => {
+                          setFilters({ ...filters, pattern: 'all' });
+                          setIsPatternDropdownOpen(false);
+                        }}
+                      >
+                        All Patterns
+                      </div>
+                      {Object.keys(DSA_PATTERNS).map((pat) => (
+                        <div
+                          key={pat}
+                          className="hp-custom-dropdown-item"
+                          onClick={() => {
+                            setFilters({ ...filters, pattern: pat });
+                            setIsPatternDropdownOpen(false);
+                          }}
+                        >
+                          {pat}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                      <th className="text-left px-6 py-4 text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#9A9A9A' }}>Title</th>
-                      <th className="text-left px-6 py-4 text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#9A9A9A' }}>Difficulty</th>
-                      <th className="text-left px-6 py-4 text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#9A9A9A' }}>Tag</th>
-                      <th className="text-left px-6 py-4 text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#9A9A9A' }}>Acceptance</th>
-                      <th className="text-left px-6 py-4 text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#9A9A9A' }}>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProblems.map((problem, index) => (
-                      <ProblemRow
-                        key={problem._id}
-                        problem={problem}
-                        isSolved={solvedProblems.some(sp => sp._id === problem._id)}
-                        index={index}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <button className="hp-filter-select hp-subscription-btn hp-right-align" onClick={() => setShowPremiumModal(true)}>
+                Subscription <Crown size={12} style={{ color: '#D4AF37' }} />
+              </button>
             )}
           </div>
         </div>
+
+        {/* Problems List (Archive Style) */}
+        <div className="hp-archive-list-wrapper">
+          <div className="hp-archive-list">
+          {loadingList ? (
+            <div className="text-center py-24 border-t border-white/5 font-mono text-zinc-600 uppercase tracking-widest text-xs">
+              Loading archive...
+            </div>
+          ) : sortedAndFilteredProblems.length === 0 ? (
+            <div className="text-center py-24 border-t border-white/5 font-mono text-zinc-600 uppercase tracking-widest text-xs">
+              No problems match your query
+            </div>
+          ) : (
+            <>
+              {visibleProblems.map((problem, index) => {
+                const isCatalog = problem.problemType === 'catalog';
+                const solved = solvedProblems.some((sp) => sp._id === problem._id);
+                const rowInner = (
+                  <>
+                    <span className="hp-row-index">{(index + 1).toString().padStart(3, '0')}</span>
+                    <span className="hp-row-title">
+                      {problem.title.toUpperCase()}
+                      {problem.leetcodeLink && (
+                        <span
+                          role="button"
+                          className="hp-row-leetcode-link"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.open(problem.leetcodeLink, '_blank', 'noopener,noreferrer');
+                          }}
+                          title="Solve on LeetCode"
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <ExternalLink size={11} style={{ display: 'inline', verticalAlign: '-1px' }} />
+                        </span>
+                      )}
+                    </span>
+                    <span className={`hp-row-difficulty hp-difficulty-${(problem.difficulty || '').toLowerCase()}`}>
+                      {problem.difficulty.toUpperCase()}
+                    </span>
+                    <div className="hp-row-tag">{problem.tags}</div>
+                    <span className="hp-row-stat">
+                      <button
+                        className="hp-row-companies-tab"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (user?.isPremium) {
+                            setSelectedProblemCompanies({
+                              title: problem.title,
+                              companies: problem.companies || []
+                            });
+                          } else {
+                            setShowPremiumModal(true);
+                          }
+                        }}
+                      >
+                        {problem.companyCount || problem.companies?.length || 0} CO
+                      </button>
+                    </span>
+                    <span className="hp-row-stat">{problem.acceptanceRate ?? 0}% ACC</span>
+                    {isCatalog ? (
+                      <span className="hp-row-badge hp-badge-catalog">
+                        LEETCODE <ExternalLink size={11} style={{ display: 'inline', verticalAlign: '-1px' }} />
+                      </span>
+                    ) : (
+                      <div className="hp-row-status">
+                        <div className={`hp-status-puck ${solved ? 'solved' : ''}`}></div>
+                      </div>
+                    )}
+                  </>
+                );
+
+                if (isCatalog) {
+                  return (
+                    <a
+                      href={problem.leetcodeLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      key={problem._id}
+                      className="hp-archive-row"
+                    >
+                      {rowInner}
+                    </a>
+                  );
+                }
+
+                return (
+                  <NavLink to={`/problem/${problem._id}`} key={problem._id} className="hp-archive-row">
+                    {rowInner}
+                  </NavLink>
+                );
+              })}
+
+              {visibleCount < sortedAndFilteredProblems.length && (
+                <button
+                  className="hp-load-more"
+                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                >
+                  Load more ({sortedAndFilteredProblems.length - visibleCount} remaining)
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
+    </div>
+
+      {/* Premium Subscription Modal */}
+      {showPremiumModal && (
+        <div className="hp-premium-overlay" onClick={() => setShowPremiumModal(false)}>
+          <div className="hp-premium-modal hp-premium-split-layout" onClick={(e) => e.stopPropagation()}>
+            <button className="hp-premium-close" onClick={() => setShowPremiumModal(false)}>
+              <X size={18} />
+            </button>
+
+            {/* Left Console Panel */}
+            <div className="hp-premium-console-panel">
+
+              <div className="hp-premium-console-hero">
+                <div className="hp-premium-console-crown">
+                  <svg width="48" height="48" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M32 8L40 28H32V8Z" fill="url(#crownGoldLight)" />
+                    <path d="M32 8L24 28H32V8Z" fill="url(#crownGoldDark)" />
+                    <path d="M32 18L35 24H29L32 18Z" fill="#FFF" opacity="0.9" />
+                    <path d="M32 28L20 22L24 36H32V28Z" fill="url(#crownGoldDark)" opacity="0.9" />
+                    <path d="M32 28L44 22L40 36H32V28Z" fill="url(#crownGoldLight)" opacity="0.9" />
+                    <path d="M22 36L12 24L18 42H22V36Z" fill="url(#crownGoldDark)" />
+                    <path d="M42 36L52 24L46 42H42V36Z" fill="url(#crownGoldLight)" />
+                    <path d="M16 46H48V49H16V46Z" fill="url(#crownGoldBase)" />
+                    <path d="M20 51H44V53H20V51Z" fill="url(#crownGoldBase)" opacity="0.6" />
+                    <circle cx="32" cy="5" r="2" fill="#FFF" />
+                    <circle cx="12" cy="22" r="1.5" fill="#D4AF37" />
+                    <circle cx="52" cy="22" r="1.5" fill="#D4AF37" />
+                    <defs>
+                      <linearGradient id="crownGoldLight" x1="32" y1="8" x2="52" y2="42" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#FFF5D6" />
+                        <stop offset="50%" stopColor="#F3C63F" />
+                        <stop offset="100%" stopColor="#C68F12" />
+                      </linearGradient>
+                      <linearGradient id="crownGoldDark" x1="32" y1="8" x2="12" y2="42" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#FFE082" />
+                        <stop offset="50%" stopColor="#D4AF37" />
+                        <stop offset="100%" stopColor="#936709" />
+                      </linearGradient>
+                      <linearGradient id="crownGoldBase" x1="32" y1="46" x2="32" y2="53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#FFE082" />
+                        <stop offset="100%" stopColor="#684603" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+
+                <div className="hp-premium-price-group">
+                  <span className="hp-premium-currency">₹</span>
+                  <span className="hp-premium-price">49</span>
+                  <span className="hp-premium-period">/mo</span>
+                </div>
+                <p className="hp-premium-price-label">ALL-INCLUSIVE PRO ACCESS</p>
+              </div>
+
+              <div className="hp-premium-system-specs">
+                <div className="hp-spec-row">
+                  <span>TERMINAL ID</span>
+                  <span>AB-908-SECURE</span>
+                </div>
+                <div className="hp-spec-row">
+                  <span>DATA LATENCY</span>
+                  <span>&lt; 14MS</span>
+                </div>
+                <div className="hp-spec-row">
+                  <span>ENCRYPTION</span>
+                  <span>AES-256-GCM</span>
+                </div>
+              </div>
+
+              <button className="hp-premium-cta" onClick={handleSubscribe}>
+                <svg width="15" height="15" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '2px' }}>
+                  <path d="M10 38H38V41H10V38Z" fill="currentColor" />
+                  <path d="M14 34H34V36H14V34Z" fill="currentColor" opacity="0.8" />
+                  <path d="M14 34L11 18L21 28L17 30L14 34Z" fill="currentColor" />
+                  <path d="M34 34L37 18L27 28L31 30L34 34Z" fill="currentColor" />
+                  <path d="M18 30L24 10L30 30H18Z" fill="currentColor" />
+                  <circle cx="24" cy="5" r="2" fill="currentColor" />
+                </svg>
+                SUBSCRIBE NOW
+              </button>
+
+              <p className="hp-premium-note">₹49 billed monthly. Cancel instantly at any time.</p>
+            </div>
+
+            {/* Right Features Panel */}
+            <div className="hp-premium-features-panel">
+              <h3 className="hp-features-panel-title">SYSTEM MODULES</h3>
+              <p className="hp-features-panel-desc">ELEVATE YOUR PREPARATION WITH ELITE-GRADE ANALYTICS AND FILTERS</p>
+
+              <div className="hp-premium-features">
+                <div className="hp-premium-feature">
+                  <div className="hp-premium-feature-content">
+                    <strong className="hp-premium-feature-title">COMPANY RECRUITMENT FILTERS</strong>
+                    <span className="hp-premium-feature-desc">Study corporate hiring patterns. Unlock premium filter databases for Google, Meta, Netflix, Amazon, Apple, and 50+ tier-1 tech firms.</span>
+                  </div>
+                </div>
+
+                <div className="hp-premium-feature">
+                  <div className="hp-premium-feature-content">
+                    <div className="hp-premium-feature-title-row">
+                      <strong className="hp-premium-feature-title">FREQUENCY & RECENCY SHIELD</strong>
+                      <span className="hp-premium-feat-badge">HOT</span>
+                    </div>
+                    <span className="hp-premium-feature-desc">Access dynamic problem occurrence frequency. Learn which specific interview problems are trending across companies right now.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Companies List Modal */}
+      {selectedProblemCompanies && (
+        <div className="hp-premium-overlay" onClick={() => setSelectedProblemCompanies(null)}>
+          <div className="hp-premium-modal hp-premium-companies-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="hp-premium-close hp-premium-companies-close" onClick={() => setSelectedProblemCompanies(null)} title="Close">
+              <X size={18} />
+            </button>
+
+            <h2 className="hp-premium-title-cyber">
+              {selectedProblemCompanies.title.toUpperCase()}
+            </h2>
+            
+            <p className="hp-premium-prompt-cyber">
+              ASKED IN <span className="hp-premium-prompt-glow-cyber">{selectedProblemCompanies.companies.length}</span> TECHNICAL INTERVIEWS AT THE FOLLOWING COMPANIES:
+            </p>
+
+            <div className="hp-companies-cyber-container custom-scroll">
+              {selectedProblemCompanies.companies.length === 0 ? (
+                <div className="hp-no-companies-cyber">
+                  NO COMPANY DETAILS AVAILABLE
+                </div>
+              ) : (
+                <div className="hp-companies-cyber-grid">
+                  {selectedProblemCompanies.companies.map((c, index) => (
+                    <div key={index} className="hp-company-cyber-box">
+                      <span className="hp-company-cyber-name">
+                        {c.name.toUpperCase()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+
+          </div>
+        </div>
+      )}
+      <PublicFooter />
     </div>
   );
 }
-
-const StatsCard = ({ icon, label, value }) => {
-  return (
-    <div
-      className="group relative p-6 rounded-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden"
-      style={{
-        background: 'linear-gradient(145deg, rgba(24, 24, 30, 0.95) 0%, rgba(18, 18, 24, 0.98) 100%)',
-        border: '1px solid rgba(212, 175, 55, 0.12)',
-        backdropFilter: 'blur(20px)',
-        boxShadow: '0 4px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255,255,255,0.02)'
-      }}
-    >
-      <div className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent)' }} />
-      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{ background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(212, 175, 55, 0.06), transparent)' }} />
-
-      <div className="relative z-10 flex items-center gap-4">
-        <div className="p-3 rounded-xl shrink-0" style={{ backgroundColor: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <div className="text-xs font-mono uppercase tracking-wider mb-1" style={{ color: '#9A9A9A' }}>{label}</div>
-          <div className="text-xl md:text-2xl font-display font-bold text-white truncate">{value}</div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ProblemRow = ({ problem, isSolved, index }) => {
-  return (
-    <tr
-      className="border-b transition-colors duration-200"
-      style={{
-        borderColor: 'rgba(255,255,255,0.05)',
-        backgroundColor: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(212, 175, 55, 0.05)'}
-      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'}
-    >
-      {/* Title */}
-      <td className="px-6 py-4">
-        <NavLink
-          to={`/problem/${problem._id}`}
-          className="text-base font-display font-semibold text-white hover:text-[#D4AF37] transition-colors"
-        >
-          {problem.title}
-        </NavLink>
-      </td>
-
-      {/* Difficulty */}
-      <td className="px-6 py-4">
-        <span className={`text-base font-display font-semibold ${getDifficultyStyle(problem.difficulty)}`}>
-          {problem.difficulty.charAt(0).toUpperCase() + problem.difficulty.slice(1)}
-        </span>
-      </td>
-
-      {/* Tag */}
-      <td className="px-6 py-4">
-        <span className="text-base font-display font-semibold text-white">
-          {problem.tags.charAt(0).toUpperCase() + problem.tags.slice(1)}
-        </span>
-      </td>
-
-      {/* Acceptance Rate */}
-      <td className="px-6 py-4">
-        <span className="text-base font-display font-semibold text-white">
-          {problem.acceptanceRate || 0.0}%
-        </span>
-      </td>
-
-      {/* Status */}
-      <td className="px-6 py-4">
-        {isSolved && (
-          <div
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full"
-            style={{
-              backgroundColor: 'rgba(34, 197, 94, 0.15)',
-              border: '1px solid rgba(34, 197, 94, 0.3)'
-            }}
-          >
-            <CheckCircle2 className="w-4 h-4" style={{ color: '#22c55e' }} />
-            <span className="text-sm font-medium" style={{ color: '#22c55e' }}>Solved</span>
-          </div>
-        )}
-      </td>
-    </tr>
-  );
-};
-
-const getDifficultyStyle = (difficulty) => {
-  switch (difficulty.toLowerCase()) {
-    case 'easy':
-      return 'text-[#22c55e]';
-    case 'medium':
-      return 'text-[#f59e0b]';
-    case 'hard':
-      return 'text-[#ef4444]';
-    default:
-      return 'text-slate-400';
-  }
-};
-
-const getDifficultyBgStyle = (difficulty) => {
-  switch (difficulty.toLowerCase()) {
-    case 'easy':
-      return 'rgba(34, 197, 94, 0.15)';
-    case 'medium':
-      return 'rgba(245, 158, 11, 0.15)';
-    case 'hard':
-      return 'rgba(239, 68, 68, 0.15)';
-    default:
-      return 'rgba(148, 163, 184, 0.15)';
-  }
-};
-
-const getDifficultyBorderStyle = (difficulty) => {
-  switch (difficulty.toLowerCase()) {
-    case 'easy':
-      return 'rgba(34, 197, 94, 0.3)';
-    case 'medium':
-      return 'rgba(245, 158, 11, 0.3)';
-    case 'hard':
-      return 'rgba(239, 68, 68, 0.3)';
-    default:
-      return 'rgba(148, 163, 184, 0.3)';
-  }
-};
 
 export default Homepage;

@@ -1,6 +1,6 @@
 // Firebase v9+ modular imports — only import what you use (tree-shaking)
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
 // These keys are SAFE to expose in client-side code — they are project identifiers,
@@ -29,5 +29,12 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-export { auth, googleProvider };
+// Configure GitHub Auth Provider
+const githubProvider = new GithubAuthProvider();
+
+// Request email and profile scopes (needed for private email GitHub accounts)
+githubProvider.addScope('read:user');
+githubProvider.addScope('user:email');
+
+export { auth, googleProvider, githubProvider };
 export default app;

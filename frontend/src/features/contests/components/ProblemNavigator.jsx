@@ -57,7 +57,7 @@ export default function ProblemNavigator({ problems, contestId, attemptId, curre
                 )}
                 <span className="truncate flex-1">{p.title}</span>
                 <span
-                  className="text-xs font-medium px-2 py-0.5 rounded"
+                  className="text-xs font-medium px-2 py-0.5 rounded-none"
                   style={{ color: getDifficultyColor(p.difficulty), backgroundColor: `${getDifficultyColor(p.difficulty)}20` }}
                 >
                   {p.difficulty}

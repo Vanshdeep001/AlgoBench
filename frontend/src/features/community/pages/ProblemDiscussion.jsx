@@ -37,40 +37,8 @@ export default function ProblemDiscussion({ problemId, problemTitle, isAuthentic
         (post.authorId?._id === currentUserId || post.authorId === currentUserId);
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    <MessageSquare size={24} />
-                    Discussion
-                </h2>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-[#9A9A9A]">Sort:</span>
-                    <select
-                        value={sort}
-                        onChange={(e) => setSort(e.target.value)}
-                        className="px-3 py-1.5 rounded-lg bg-black/30 border border-[#D4AF37]/20 text-[#EDEDED] text-sm focus:outline-none focus:border-[#D4AF37]/50"
-                    >
-                        <option value="newest">Newest</option>
-                        <option value="top">Top</option>
-                        <option value="comments">Most commented</option>
-                    </select>
-                    {isAuthenticated && (
-                        <button
-                            type="button"
-                            onClick={() => setModalOpen(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                            style={{
-                                backgroundColor: 'rgba(212, 175, 55, 0.2)',
-                                color: '#D4AF37',
-                                border: '1px solid rgba(212, 175, 55, 0.3)',
-                            }}
-                        >
-                            <Plus size={18} />
-                            New post
-                        </button>
-                    )}
-                </div>
-            </div>
+        <div className="tab-content-fade">
+            <h1 className="editorial-header-creative mb-8" style={{ fontFamily: '"Fraunces", serif', fontWeight: 700, textTransform: 'none', letterSpacing: '-0.01em' }}>Problem Discussion</h1>
 
             {selectedPost ? (
                 <div className="space-y-4">
@@ -100,37 +68,71 @@ export default function ProblemDiscussion({ problemId, problemTitle, isAuthentic
                     />
                 </div>
             ) : (
-                <>
-                    {loading && (
-                        <div className="flex items-center gap-2 text-[#9A9A9A] py-4">
-                            <span className="loading loading-spinner loading-sm" />
-                            Loading discussions...
+                <div className="discussion-card-container animate-fade-in">
+                    <div className="discussion-card-header flex items-center justify-between border-b border-white/[0.04] bg-white/[0.01] px-6 py-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] uppercase tracking-widest text-white font-heading">Sort by:</span>
+                            <select
+                                value={sort}
+                                onChange={(e) => setSort(e.target.value)}
+                                className="editorial-select"
+                            >
+                                <option value="newest">NEWEST</option>
+                                <option value="top">TOP</option>
+                                <option value="comments">MOST COMMENTED</option>
+                            </select>
                         </div>
-                    )}
-                    {error && <p className="text-red-400 text-sm">{error}</p>}
-                    {!loading && (
-                        <div className="space-y-3">
-                            {posts.length === 0 ? (
-                                <p className="text-[#9A9A9A] py-6">
-                                    No discussions yet.
-                                    {isAuthenticated && ' Be the first to start one!'}
-                                </p>
-                            ) : (
-                                posts.map((post) => (
-                                    <PostCard
-                                        key={post._id}
-                                        post={post}
-                                        problemId={problemId}
-                                        isAuthenticated={isAuthenticated}
-                                        onSelectPost={setSelectedPost}
-                                        onDelete={handleDeletePost}
-                                        canDelete={canDeletePost(post)}
-                                    />
-                                ))
-                            )}
-                        </div>
-                    )}
-                </>
+                        {isAuthenticated && (
+                            <button
+                                type="button"
+                                onClick={() => setModalOpen(true)}
+                                className="editorial-btn-premium"
+                            >
+                                <Plus size={16} />
+                                Start Discussion
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="p-6">
+                        {loading && (
+                            <div className="flex items-center gap-2 text-[#9A9A9A] py-4">
+                                <span className="loading loading-spinner loading-sm" />
+                                Loading discussions...
+                            </div>
+                        )}
+                        {error && <p className="text-red-400 text-sm">{error}</p>}
+                        {!loading && (
+                            <>
+                                {posts.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                                        <MessageSquare size={32} className="text-[#D4AF37] mb-4 opacity-80" />
+                                        <h3 className="text-base font-heading uppercase text-[#E8EDF2] mb-2" style={{ fontFamily: 'Unbounded', fontWeight: 900, letterSpacing: '-0.04em' }}>
+                                            No Discussions Yet
+                                        </h3>
+                                        <p className="text-[11px] text-[#9A9A9A] max-w-sm leading-relaxed">
+                                            Be the first to share your thoughts, ask a question, or explain your approach to help the community!
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {posts.map((post) => (
+                                            <PostCard
+                                                key={post._id}
+                                                post={post}
+                                                problemId={problemId}
+                                                isAuthenticated={isAuthenticated}
+                                                onSelectPost={setSelectedPost}
+                                                onDelete={handleDeletePost}
+                                                canDelete={canDeletePost(post)}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
             )}
 
             <CreatePostModal

@@ -30,25 +30,25 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, problemId, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm" style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }} onClick={onClose}>
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 backdrop-blur-sm" style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)', zIndex: 10000 }} onClick={onClose}>
             <div
-                className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl flex flex-col"
+                className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-[4px] flex flex-col"
                 style={{
-                    background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.98) 0%, rgba(15, 15, 20, 0.99) 100%)',
-                    border: '1px solid rgba(212, 175, 55, 0.2)',
+                    background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.99) 0%, rgba(15, 15, 20, 1.0) 100%)',
+                    border: 'none',
                     backdropFilter: 'blur(20px)',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(212, 175, 55, 0.1)'
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.75)'
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgba(212, 175, 55, 0.2)' }}>
-                    <h2 className="text-xl font-display font-semibold text-white">
+                <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}>
+                    <h2 className="text-sm font-heading font-black text-white uppercase tracking-tight" style={{ fontFamily: 'Unbounded', fontWeight: 900, letterSpacing: '-0.04em' }}>
                         {problemId ? `New discussion${problemTitle ? ` · ${problemTitle}` : ''}` : 'New post'}
                     </h2>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="p-2 rounded-xl transition-colors font-mono"
+                        className="p-2 rounded-none transition-colors font-mono"
                         style={{ color: '#9A9A9A' }}
                         onMouseEnter={(e) => { e.currentTarget.style.color = '#EDEDED'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.color = '#9A9A9A'; e.currentTarget.style.backgroundColor = 'transparent'; }}
@@ -59,23 +59,27 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, problemId, 
                 </div>
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden p-6 gap-5">
                     <div>
-                        <label className="block text-sm font-mono font-medium mb-2" style={{ color: '#9A9A9A' }}>Title</label>
+                        <label className="block text-[10px] font-heading uppercase tracking-wider mb-1 text-slate-400">Title</label>
                         <input
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="Post title"
                             maxLength={200}
-                            className="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 transition-all placeholder:text-[#9A9A9A]"
+                            className="w-full py-3 focus:outline-none transition-all font-sans text-sm placeholder:text-[#9A9A9A]"
                             style={{
-                                backgroundColor: 'rgba(11, 11, 14, 0.6)',
-                                border: '1px solid rgba(212, 175, 55, 0.2)',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                                borderRadius: '0',
                                 color: '#EDEDED'
                             }}
+                            onFocus={(e) => e.target.style.borderBottomColor = 'rgba(255, 255, 255, 0.25)'}
+                            onBlur={(e) => e.target.style.borderBottomColor = 'rgba(255, 255, 255, 0.08)'}
                         />
                     </div>
                     <div className="flex-1 flex flex-col min-h-0">
-                        <label className="block text-sm font-mono font-medium mb-2" style={{ color: '#9A9A9A' }}>
+                        <label className="block text-[10px] font-heading uppercase tracking-wider mb-1 text-slate-400">
                             Content (Markdown supported)
                         </label>
                         <textarea
@@ -83,10 +87,11 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, problemId, 
                             onChange={(e) => setContent(e.target.value)}
                             placeholder="Write your post content... You can use **bold**, *italic*, `code`, lists, etc."
                             rows={12}
-                            className="w-full flex-1 min-h-[200px] px-4 py-3 rounded-xl resize-y font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 transition-all placeholder:text-[#9A9A9A]"
+                            className="w-full flex-1 min-h-[200px] py-3 resize-y font-sans text-sm focus:outline-none transition-all placeholder:text-[#9A9A9A]"
                             style={{
-                                backgroundColor: 'rgba(11, 11, 14, 0.6)',
-                                border: '1px solid rgba(212, 175, 55, 0.2)',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderRadius: '0',
                                 color: '#EDEDED'
                             }}
                         />
@@ -96,7 +101,7 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, problemId, 
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-5 py-2.5 rounded-xl font-mono transition-colors"
+                            className="px-5 py-2.5 rounded-[4px] font-mono text-xs uppercase tracking-wider transition-colors cursor-pointer"
                             style={{ color: '#9A9A9A' }}
                             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; }}
                             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
@@ -106,12 +111,11 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, problemId, 
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="px-5 py-2.5 rounded-xl font-semibold transition-all disabled:opacity-50 hover:scale-[1.02]"
+                            className="px-5 py-2.5 rounded-[4px] font-mono text-xs uppercase tracking-wider transition-all disabled:opacity-50 hover:bg-white/10 cursor-pointer"
                             style={{
-                                backgroundColor: 'rgba(212, 175, 55, 0.2)',
-                                color: '#D4AF37',
-                                border: '1px solid rgba(212, 175, 55, 0.3)',
-                                boxShadow: '0 0 20px -5px rgba(212, 175, 55, 0.3)'
+                                backgroundColor: 'transparent',
+                                color: '#FFFFFF',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
                             }}
                         >
                             {submitting ? 'Posting...' : 'Create Post'}

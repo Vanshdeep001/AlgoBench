@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import ArrayView from './ArrayView';
 import TreeView from './TreeView';
 import GraphView from './GraphView';
@@ -7,19 +7,22 @@ import BacktrackingView from './BacktrackingView';
 import MathView from './MathView';
 import { useAnimator } from '../hooks/useAnimator';
 
-const VisualizationCanvas = ({
-  selectedAlgorithm,
-  inputData,
-  target,
-  arraySize,
-  isPlaying,
-  speed,
-  onStepChange,
-  onStatsChange,
-  onExplanationChange,
-  onLineHighlight,
-  onProgressChange
-}) => {
+const VisualizationCanvas = forwardRef((
+  {
+    selectedAlgorithm,
+    inputData,
+    target,
+    arraySize,
+    isPlaying,
+    speed,
+    onStepChange,
+    onStatsChange,
+    onExplanationChange,
+    onLineHighlight,
+    onProgressChange
+  },
+  ref
+) => {
   const canvasRef = useRef(null);
   const {
     data,
@@ -30,6 +33,17 @@ const VisualizationCanvas = ({
     resetAnimation,
     stepForward
   } = useAnimator(selectedAlgorithm, inputData, target, arraySize, speed);
+
+  // Expose reset and stepForward to parent via ref
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      pauseAnimation();
+      resetAnimation();
+    },
+    stepForward: () => {
+      stepForward();
+    }
+  }));
 
   useEffect(() => {
     if (isPlaying && !isAnimating) {
@@ -57,7 +71,7 @@ const VisualizationCanvas = ({
   useEffect(() => {
     resetAnimation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAlgorithm, inputData, target, arraySize]);
+  }, [selectedAlgorithm, inputData, arraySize]);
 
   // CRITICAL FIX: Stop playing when animation completes
   useEffect(() => {
@@ -71,7 +85,13 @@ const VisualizationCanvas = ({
   if (!selectedAlgorithm) {
     return (
       <div className="array-view-new empty">
-        <div className="empty-message-new">Select an algorithm to visualize</div>
+        <div className="empty-message-new">
+          <svg className="inline-loader-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="2.5" />
+            <path d="M12 2C6.47715 2 2 6.47715 2 12C2 14.7614 3.11929 17.2614 4.92893 19.0711" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+          Select an algorithm to begin visualization.
+        </div>
       </div>
     );
   }
@@ -155,6 +175,6 @@ const VisualizationCanvas = ({
       {renderVisualization()}
     </div>
   );
-};
+})
 
 export default VisualizationCanvas;

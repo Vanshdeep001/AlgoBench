@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axiosClient from './utils/axiosClient';
-import { signInWithPopup, signOut } from 'firebase/auth';
-import { auth, googleProvider } from './config/firebase';
+import { signInWithPopup, signOut, getAdditionalUserInfo } from 'firebase/auth';
+import { auth, googleProvider, githubProvider } from './config/firebase';
 
 /* ================= REGISTER ================= */
 export const registerUser = createAsyncThunk(
@@ -74,6 +74,54 @@ export const googleLogin = createAsyncThunk(
   }
 );
 
+/* ================= GITHUB LOGIN ================= */
+export const githubLogin = createAsyncThunk(
+  'auth/githubLogin',
+  async (_, { rejectWithValue }) => {
+    try {
+      // Step 1: Open GitHub Sign-In popup via Firebase
+      const result = await signInWithPopup(auth, githubProvider);
+
+      // Step 2: Extract GitHub-specific info (username)
+      const additionalInfo = getAdditionalUserInfo(result);
+      const githubUsername = additionalInfo?.username || null;
+
+      // Step 3: Get the Firebase ID token (JWT signed by Firebase)
+      const idToken = await result.user.getIdToken();
+
+      // Step 4: Send the ID token + GitHub username to YOUR backend
+      const response = await axiosClient.post('/user/github-login', {
+        idToken,
+        githubUsername,
+      });
+
+      // Step 5: Return the user data from your backend (MongoDB user)
+      return response.data.user;
+    } catch (error) {
+      // Handle specific Firebase errors
+      const errorCode = error?.code;
+      let message = 'GitHub Sign-In failed';
+
+      if (errorCode === 'auth/popup-closed-by-user') {
+        message = 'Sign-in cancelled';
+      } else if (errorCode === 'auth/popup-blocked') {
+        message = 'Pop-up blocked by browser. Please allow pop-ups.';
+      } else if (errorCode === 'auth/network-request-failed') {
+        message = 'Network error. Please check your connection.';
+      } else if (errorCode === 'auth/account-exists-with-different-credential') {
+        message = 'An account already exists with this email using a different sign-in method.';
+      } else if (error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+
+      return rejectWithValue({
+        message,
+        status: error.response?.status || 400,
+      });
+    }
+  }
+);
+
 /* ================= CHECK AUTH ================= */
 export const checkAuth = createAsyncThunk(
   'auth/check',
@@ -130,6 +178,22 @@ export const updateUser = createAsyncThunk(
   }
 );
 
+/* ================= SUBSCRIBE USER ================= */
+export const subscribeUser = createAsyncThunk(
+  'auth/subscribe',
+  async (paymentDetails, { rejectWithValue }) => {
+    try {
+      const response = await axiosClient.post('/payment/verify', paymentDetails);
+      return response.data.user;
+    } catch (error) {
+      return rejectWithValue({
+        message: error.response?.data?.message || 'Verification failed',
+        status: error.response?.status || 400,
+      });
+    }
+  }
+);
+
 /* ================= SLICE ================= */
 const authSlice = createSlice({
   name: 'auth',
@@ -139,7 +203,13 @@ const authSlice = createSlice({
     loading: false,
     error: null,
   },
-  reducers: {},
+  reducers: {
+    togglePremiumLocal: (state) => {
+      if (state.user) {
+        state.user.isPremium = !state.user.isPremium;
+      }
+    }
+  },
   extraReducers: (builder) => {
     builder
 
@@ -194,6 +264,23 @@ const authSlice = createSlice({
         state.error = action.payload?.message || 'Google Sign-In failed';
       })
 
+      /* GITHUB LOGIN */
+      .addCase(githubLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(githubLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(githubLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        state.error = action.payload?.message || 'GitHub Sign-In failed';
+      })
+
       /* CHECK AUTH */
       .addCase(checkAuth.pending, (state) => {
         state.loading = true;
@@ -223,8 +310,17 @@ const authSlice = createSlice({
       })
       .addCase(updateUser.rejected, (state, action) => {
         state.error = action.payload.message;
+      })
+      /* SUBSCRIBE USER */
+      .addCase(subscribeUser.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(subscribeUser.rejected, (state, action) => {
+        state.error = action.payload.message;
       });
   },
 });
 
+export const { togglePremiumLocal } = authSlice.actions;
 export default authSlice.reducer;

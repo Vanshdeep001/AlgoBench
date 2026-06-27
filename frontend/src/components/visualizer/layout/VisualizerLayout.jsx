@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import ControlPanel from './ControlPanel';
 import CodePanel from './CodePanel';
 import VisualizationCanvas from '../canvas/VisualizationCanvas';
@@ -7,7 +7,8 @@ import '../styles/graphs.css';
 import '../styles/trees.css';
 import '../styles/dp.css';
 import '../styles/backtracking.css';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import '../styles/math.css';
+import { ChevronDown, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucide-react';
 
 const VisualizerLayout = ({
   categories,
@@ -38,14 +39,34 @@ const VisualizerLayout = ({
   const [progress, setProgress] = useState(0);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const canvasRef = useRef(null);
+
+  const handleReset = () => {
+    setIsPlaying(false);
+    setCurrentStep(0);
+    setProgress(0);
+    setExplanation('Select an algorithm to begin visualization.');
+    setStats({ comparisons: 0, swaps: 0, timeComplexity: 'O(1)', spaceComplexity: 'O(1)' });
+    setHighlightedLine(null);
+    canvasRef.current?.reset();
+  };
+
+  const handleStep = () => {
+    canvasRef.current?.stepForward();
+  };
 
   const currentCategory = categories[selectedCategory];
 
   const toggleCategory = (categoryKey) => {
-    setExpandedCategories(prev => ({
-      ...prev,
-      [categoryKey]: !prev[categoryKey]
-    }));
+    setExpandedCategories(prev => {
+      const currentVal = prev[categoryKey] !== undefined 
+        ? prev[categoryKey] 
+        : selectedCategory === categoryKey;
+      return {
+        ...prev,
+        [categoryKey]: !currentVal
+      };
+    });
   };
 
   const isSplitView = (algo) => {
@@ -58,17 +79,12 @@ const VisualizerLayout = ({
       <aside className={`visualizer-sidebar-new ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header-new">
           <h2 className="sidebar-title-new">Algorithms</h2>
-          <button
-            className="sidebar-toggle-btn"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-            {sidebarCollapsed ? '→' : '←'}
-          </button>
         </div>
         <nav className="sidebar-nav">
           {Object.entries(categories).map(([key, category]) => {
-            const isExpanded = expandedCategories[key] || selectedCategory === key;
+            const isExpanded = expandedCategories[key] !== undefined 
+              ? expandedCategories[key] 
+              : selectedCategory === key;
             const isActive = selectedCategory === key;
 
             return (
@@ -100,6 +116,9 @@ const VisualizerLayout = ({
                         className={`algorithm-item-new ${selectedAlgorithm?.id === algo.id ? 'selected' : ''}`}
                         onClick={() => onAlgorithmSelect(algo)}
                       >
+                        <span className="text-[11px] font-display mr-3 opacity-40">
+                          {(category.algorithms.indexOf(algo) + 1).toString().padStart(2, '0')}
+                        </span>
                         <span className="algorithm-name-new">{algo.name}</span>
                         <span className="algorithm-complexity-new">{algo.complexity}</span>
                       </button>
@@ -113,6 +132,22 @@ const VisualizerLayout = ({
             );
           })}
         </nav>
+
+        {/* Sidebar Footer */}
+        <div className="sidebar-footer-new">
+          <div className="sidebar-toggle-container-bottom">
+            {!sidebarCollapsed && (
+              <span className="sidebar-bottom-title">Algorithms</span>
+            )}
+            <button
+              className="sidebar-toggle-btn"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            >
+              {sidebarCollapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
+            </button>
+          </div>
+        </div>
       </aside>
 
       {/* Main Content Area */}
@@ -133,6 +168,8 @@ const VisualizerLayout = ({
           progress={progress}
           sidebarCollapsed={sidebarCollapsed}
           setSidebarCollapsed={setSidebarCollapsed}
+          onReset={handleReset}
+          onStep={handleStep}
         />
 
         {/* Hero Visualization Area */}
@@ -140,6 +177,7 @@ const VisualizerLayout = ({
           {/* Visualization Canvas - Left Side for split view algos */}
           <div className={isSplitView(selectedAlgorithm) ? 'graph-canvas-container' : 'full-canvas-container'}>
             <VisualizationCanvas
+              ref={canvasRef}
               selectedAlgorithm={selectedAlgorithm}
               inputData={inputData}
               target={target}
@@ -158,19 +196,19 @@ const VisualizerLayout = ({
           {isSplitView(selectedAlgorithm) && (
             <div className="graph-explanation-card">
               <div className="explanation-card-header">
-                <h3>Algorithm Steps</h3>
+                <h3>Trace Logs</h3>
               </div>
               <div className="explanation-card-content">
-                {explanation || 'Click play to begin visualization.'}
+                {explanation || 'Awaiting simulation start...'}
               </div>
             </div>
           )}
         </div>
 
-        {/* Step Explanation - Hidden for split view algos */}
-        {!isSplitView(selectedAlgorithm) && (
+        {/* Step Explanation - Hidden for split view algos and when nothing is selected */}
+        {!isSplitView(selectedAlgorithm) && selectedAlgorithm && (
           <div className="explanation-section">
-            <div className="explanation-content-new">
+            <div className={`explanation-content-new ${explanation === 'Select an algorithm to begin visualization.' ? 'placeholder-text' : ''}`}>
               {explanation}
             </div>
           </div>

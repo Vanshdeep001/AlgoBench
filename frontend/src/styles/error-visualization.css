@@ -1,0 +1,480 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Error Visualization - Beautiful Error Display System
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.error-visualization {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ─── Empty State ─────────────────────────────────────────────────────────────── */
+
+.error-visualization-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 60px 24px;
+}
+
+.error-empty-state {
+  text-align: center;
+}
+
+.error-empty-icon {
+  color: #4ade80;
+  margin-bottom: 16px;
+  opacity: 0.9;
+}
+
+.error-empty-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #E0E0E0;
+  margin-bottom: 8px;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.error-empty-desc {
+  font-size: 13px;
+  color: #909099;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ─── Error Summary ───────────────────────────────────────────────────────────── */
+
+.error-summary {
+  background: linear-gradient(135deg, rgba(255, 71, 87, 0.04), rgba(255, 165, 0, 0.04));
+  border: 1px solid rgba(255, 71, 87, 0.15);
+  border-radius: 12px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.error-summary-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.error-summary-text {
+  flex: 1;
+}
+
+.error-summary-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #EDEDED;
+  margin: 0 0 4px 0;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.error-summary-desc {
+  font-size: 12px;
+  color: #909099;
+  margin: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.error-summary-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.error-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.error-stat.critical {
+  background: rgba(255, 71, 87, 0.1);
+  border: 1px solid rgba(255, 71, 87, 0.3);
+}
+
+.error-stat.error {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+.error-stat.warning {
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+.error-stat.info {
+  background: rgba(0, 217, 255, 0.1);
+  border: 1px solid rgba(0, 217, 255, 0.3);
+}
+
+.error-stat-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: #EDEDED;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.error-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #909099;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* ─── Error List ──────────────────────────────────────────────────────────────── */
+
+.error-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── Error Card ──────────────────────────────────────────────────────────────── */
+
+.error-card {
+  border: 1px solid;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  backdrop-filter: blur(5px);
+}
+
+.error-card:hover {
+  backdrop-filter: blur(8px);
+  transform: translateY(-1px);
+}
+
+/* Header */
+.error-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'Outfit', sans-serif;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.error-card-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.error-card-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.error-card-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.error-type {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.error-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.error-line {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #909099;
+}
+
+.error-message {
+  font-size: 13px;
+  color: #EDEDED;
+  font-weight: 500;
+  line-height: 1.4;
+  word-wrap: break-word;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.error-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.error-action-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #909099;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.error-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #EDEDED;
+  transform: scale(1.1);
+}
+
+.error-action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Body (expanded) */
+.error-card-body {
+  padding: 0 16px 16px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Error Sections ──────────────────────────────────────────────────────────── */
+
+.error-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #EDEDED;
+  margin: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.error-section-title svg {
+  opacity: 0.6;
+}
+
+/* Code Section */
+.error-code-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error-code-block {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #00FF41;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: pre;
+  word-break: break-all;
+  scroll-behavior: smooth;
+}
+
+.error-code-block::-webkit-scrollbar {
+  height: 4px;
+}
+
+.error-code-block::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.error-code-block::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.error-code-block::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Explanation Section */
+.error-explanation-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error-explanation-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #EDEDED;
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Fix Section */
+.error-fix-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(74, 222, 128, 0.05);
+  border: 1px solid rgba(74, 222, 128, 0.15);
+  border-radius: 8px;
+}
+
+.error-fix-suggestion {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #4ade80;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  padding: 0;
+}
+
+/* Context Section */
+.error-context-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 217, 255, 0.05);
+  border: 1px solid rgba(0, 217, 255, 0.15);
+  border-radius: 8px;
+}
+
+.error-context-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #EDEDED;
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Error Footer ────────────────────────────────────────────────────────────── */
+
+.error-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 165, 0, 0.04);
+  border: 1px solid rgba(255, 165, 0, 0.15);
+  border-radius: 10px;
+  margin-top: 8px;
+}
+
+.error-footer-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.error-footer-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 165, 0, 0.1);
+  border-radius: 8px;
+  color: #ffa500;
+  flex-shrink: 0;
+}
+
+.error-footer-text p {
+  font-size: 12px;
+  color: #EDEDED;
+  margin: 0;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Responsive Design ──────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .error-visualization {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .error-summary-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .error-summary-stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .error-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .error-card-actions {
+    align-self: flex-start;
+  }
+
+  .error-message {
+    font-size: 12px;
+  }
+}
+
+/* ─── Dark Mode Support ──────────────────────────────────────────────────────── */
+
+@supports (color: oklch(1 1 1)) {
+  .error-visualization {
+    color-scheme: dark;
+  }
+}

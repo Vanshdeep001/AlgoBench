@@ -31,7 +31,7 @@ export default function SubmitPanel({
         value={language}
         onChange={(e) => onLanguageChange(e.target.value)}
         disabled={disabled}
-        className="rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+        className="rounded-none px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
         style={{
           backgroundColor: 'rgba(15, 15, 20, 0.98)',
           border: style.border,
@@ -48,7 +48,7 @@ export default function SubmitPanel({
         type="button"
         onClick={onRun}
         disabled={disabled || loading}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+        className="flex items-center gap-2 px-4 py-2 rounded-none text-sm font-semibold transition-all disabled:opacity-50"
         style={{
           backgroundColor: 'rgba(212, 175, 55, 0.15)',
           border: style.border,
@@ -62,7 +62,7 @@ export default function SubmitPanel({
         type="button"
         onClick={onSubmit}
         disabled={disabled || loading}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+        className="flex items-center gap-2 px-4 py-2 rounded-none text-sm font-semibold transition-all disabled:opacity-50"
         style={{
           backgroundColor: 'rgba(34, 197, 94, 0.15)',
           border: '1px solid rgba(34, 197, 94, 0.3)',

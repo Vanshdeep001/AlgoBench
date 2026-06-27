@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const LiveCodingEditor = () => {
+const LiveCodingEditor = ({ showTestcases = true }) => {
     const [displayedCode, setDisplayedCode] = useState('');
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isTyping, setIsTyping] = useState(true);
+    const [isTestcaseOpen, setIsTestcaseOpen] = useState(true);
+    const [isTestcaseMax, setIsTestcaseMax] = useState(false);
     const cursorRef = useRef(null);
 
     // C++ code to be typed
@@ -168,6 +170,40 @@ const LiveCodingEditor = () => {
                         <span className="cursor" ref={cursorRef}>|</span>
                     </div>
                 </div>
+                {/* Testcase panel (similar to LeetCode) */}
+                {showTestcases && (
+                    <div className={`testcase-panel ${isTestcaseOpen ? 'open' : 'closed'} ${isTestcaseMax ? 'max' : ''}`}>
+                        <div className="testcase-header" onClick={() => setIsTestcaseOpen(v => !v)}>
+                            <div className="testcase-title">Testcases</div>
+                            <div className="testcase-controls">
+                                <button
+                                    className="tc-btn tc-toggle"
+                                    aria-label={isTestcaseOpen ? 'Collapse testcases' : 'Expand testcases'}
+                                >
+                                    {isTestcaseOpen ? '▾' : '▸'}
+                                </button>
+                                <button
+                                    className="tc-btn tc-max"
+                                    onClick={(e) => { e.stopPropagation(); setIsTestcaseMax(v => !v); }}
+                                    aria-label={isTestcaseMax ? 'Restore' : 'Maximize'}
+                                >
+                                    {isTestcaseMax ? '🗗' : '🗖'}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="testcase-body" role="region" aria-hidden={!isTestcaseOpen}>
+                            <div className="testcase-list">
+                                <div className="tc-item"><strong>Input:</strong> 5\n1 2 3 4 5</div>
+                                <div className="tc-item"><strong>Input:</strong> 3\n-1 0 1</div>
+                                <div className="tc-item"><strong>Input:</strong> 4\n2 2 2 2</div>
+                            </div>
+                            <div className="testcase-actions">
+                                <button className="run-btn">Run</button>
+                                <button className="submit-btn">Submit</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <style jsx>{`
@@ -179,7 +215,7 @@ const LiveCodingEditor = () => {
 
                 .editor-window {
                     background: #0b0b0f;
-                    border-radius: 16px;
+                    border-radius: 2px;
                     overflow: hidden;
                     border: 1px solid rgba(212, 175, 55, 0.3);
                     box-shadow: 
@@ -286,6 +322,84 @@ const LiveCodingEditor = () => {
                     background: #0b0b0f;
                 }
 
+                /* Testcase panel styles */
+                .testcase-panel {
+                    border-top: 1px solid rgba(255,255,255,0.04);
+                    background: linear-gradient(180deg, rgba(11,11,15,0.95), rgba(10,10,12,0.98));
+                    transition: height 0.28s ease, max-height 0.28s ease;
+                    overflow: hidden;
+                }
+
+                .testcase-panel.closed { height: 44px; }
+                .testcase-panel.open { height: 140px; }
+                .testcase-panel.open.max { height: 340px; }
+
+                .testcase-header {
+                    display:flex;
+                    align-items:center;
+                    justify-content:space-between;
+                    padding: 10px 16px;
+                    cursor: pointer;
+                }
+
+                .testcase-title {
+                    color: #e5e7eb;
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+
+                .testcase-controls { display:flex; gap:8px; align-items:center; }
+                .tc-btn {
+                    background: transparent;
+                    border: none;
+                    color: #9ca3af;
+                    font-size: 14px;
+                    padding:6px;
+                    cursor: pointer;
+                }
+                .tc-btn:hover { color: #fff; }
+
+                .testcase-body {
+                    padding: 10px 16px 18px 16px;
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 12px;
+                    align-items: flex-start;
+                }
+
+                .testcase-list { flex:1; overflow:auto; max-height:220px; }
+                .tc-item {
+                    background: rgba(255,255,255,0.02);
+                    border: 1px solid rgba(255,255,255,0.03);
+                    color: #e5e7eb;
+                    padding: 10px;
+                    margin-bottom: 8px;
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 13px;
+                    white-space: pre-wrap;
+                    border-radius: 6px;
+                }
+
+                .testcase-actions {
+                    width: 140px;
+                    display:flex;
+                    flex-direction:column;
+                    gap:8px;
+                }
+                .run-btn, .submit-btn {
+                    padding:10px 12px;
+                    border-radius:8px;
+                    border: none;
+                    cursor: pointer;
+                    font-weight: 600;
+                    font-family: 'Inter', sans-serif;
+                }
+                .run-btn { background: rgba(99,102,241,0.12); color: #c7d2fe; }
+                .submit-btn { background: linear-gradient(90deg,#f59e0b,#db2777); color: white; }
+                .run-btn:hover { filter:brightness(1.05); }
+                .submit-btn:hover { filter:brightness(1.05); }
+
                 .code-display {
                     font-family: 'JetBrains Mono', monospace;
                     font-size: 15px;
@@ -377,7 +491,7 @@ const LiveCodingEditor = () => {
                     }
 
                     .editor-window {
-                        border-radius: 12px;
+                        border-radius: 2px;
                     }
 
                     .code-display {

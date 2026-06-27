@@ -60,22 +60,21 @@ export default function CommentList({
                         onChange={(e) => setNewComment(e.target.value)}
                         placeholder="Add a comment..."
                         rows={3}
-                        className="w-full px-4 py-3 rounded-xl text-sm resize-y focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 transition-all placeholder:text-[#9A9A9A]"
+                        className="w-full px-4 py-3 rounded-none text-sm resize-y focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/50 transition-all placeholder:text-[#9A9A9A]"
                         style={{
                             backgroundColor: 'rgba(11, 11, 14, 0.6)',
-                            border: '1px solid rgba(212, 175, 55, 0.2)',
+                            border: '1px solid rgba(255, 255, 255, 0.05)',
                             color: '#EDEDED'
                         }}
                     />
                     <button
                         type="submit"
                         disabled={!newComment.trim() || submitting}
-                        className="self-end px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 hover:scale-[1.02]"
+                        className="self-end px-6 py-2.5 rounded-none text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 hover:bg-[#D4AF37]/10 disabled:cursor-not-allowed cursor-pointer"
                         style={{
-                            backgroundColor: 'rgba(212, 175, 55, 0.2)',
+                            backgroundColor: 'transparent',
                             color: '#D4AF37',
-                            border: '1px solid rgba(212, 175, 55, 0.3)',
-                            boxShadow: '0 0 20px -5px rgba(212, 175, 55, 0.3)'
+                            border: '1px solid rgba(212, 175, 55, 0.35)',
                         }}
                     >
                         {submitting ? 'Posting...' : 'Post Comment'}
@@ -95,10 +94,9 @@ export default function CommentList({
                     return (
                         <div
                             key={c._id}
-                            className="p-4 rounded-xl"
+                            className="p-5 rounded-none border border-white/5 transition-colors hover:border-[#D4AF37]/20"
                             style={{
-                                background: 'linear-gradient(135deg, rgba(20, 20, 25, 0.6) 0%, rgba(15, 15, 20, 0.8) 100%)',
-                                border: '1px solid rgba(212, 175, 55, 0.1)'
+                                background: 'rgba(18, 18, 22, 0.45)',
                             }}
                         >
                             <div className="flex items-start justify-between gap-2">

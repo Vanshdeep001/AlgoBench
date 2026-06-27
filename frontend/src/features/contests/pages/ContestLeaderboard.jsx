@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchContestById, fetchLeaderboard } from '../contestsSlice';
 import LeaderboardTable from '../components/LeaderboardTable';
-import { Code, Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import UserDropdown from '../../../components/UserDropdown';
 
 const style = { bg: '#0B0B0E', gold: '#D4AF37', muted: '#9A9A9A', border: '1px solid rgba(212, 175, 55, 0.1)' };
@@ -29,13 +29,11 @@ export default function ContestLeaderboard() {
       </div>
 
       <nav className="relative z-50 border-b py-4" style={{ borderColor: 'rgba(212, 175, 55, 0.1)', backgroundColor: 'rgba(11, 11, 14, 0.9)' }}>
-        <div className="container mx-auto px-4 max-w-7xl flex items-center justify-between">
+        <div className="container mx-auto px-4 max-w-5xl flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link to="/problems" className="flex items-center gap-2">
-              <div className="p-2 rounded-xl" style={{ backgroundColor: style.bg, border: style.border }}>
-                <Code className="w-5 h-5" style={{ color: style.gold }} />
-              </div>
-              <span className="text-lg font-display font-bold text-white">AlgoBench</span>
+            <Link to="/problems" className="flex items-center gap-2.5">
+              <img src="/algobench_logo_2_no_text.png?v=4" alt="AlgoBench" className="w-[18px] h-[18px] object-contain" />
+              <span className="text-lg md:text-xl font-logo font-bold tracking-[0.03em] uppercase bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">AlgoBench</span>
             </Link>
             <Link to={`/contests/${contestId}`} className="text-sm font-medium hover:text-[#D4AF37] transition-colors" style={{ color: style.muted }}>
               ← Back to contest
@@ -45,8 +43,8 @@ export default function ContestLeaderboard() {
         </div>
       </nav>
 
-      <div className="relative z-10 pt-8 pb-20 px-4 container mx-auto max-w-4xl">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="relative z-10 pt-8 pb-20 px-4 container mx-auto max-w-5xl">
+        <div className="flex items-center gap-3 mb-6 pl-4 border-l-2" style={{ borderColor: style.gold }}>
           <Trophy size={28} style={{ color: style.gold }} />
           <div>
             <h1 className="text-2xl font-display font-bold text-white">

@@ -5,6 +5,11 @@
     --font-sans: "Outfit", sans-serif;
     --font-display: "Space Grotesk", sans-serif;
     --font-mono: "JetBrains Mono", monospace;
+    --font-unique: "Orbitron", sans-serif;
+    --font-creative: "Unbounded", sans-serif;
+    --font-brand: "Syne", sans-serif;
+    --font-navbar: "Plus Jakarta Sans", sans-serif;
+    --font-logo: "Syne", sans-serif;
 
     --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
     --animate-fade-in: fade-in 1s ease-out forwards;
@@ -102,4 +107,20 @@ select option:checked {
     select option:hover {
         background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(184, 150, 46, 0.1) 100%);
     }
+}
+
+/* Fix double scrollbars caused by DaisyUI default styles */
+html {
+    overflow-y: auto !important;
+    scroll-behavior: smooth;
+}
+
+/* Hide scrollbar indicators globally while preserving scrolling functionality */
+html, body {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera, Edge */
 }

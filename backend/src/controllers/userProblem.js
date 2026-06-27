@@ -2,7 +2,6 @@ const { getLanguageById, submitBatch, submitToken } = require("../utils/problemU
 const Problem = require("../models/problem");
 const User = require("../models/user");
 const Submission = require("../models/submission");
-const SolutionVideo = require("../models/solutionVideo");
 
 /** Detect if reference solutions look like function-style (LeetCode) rather than full programs. */
 function looksLikeFunctionStyle(referenceSolution, visibleTestCases) {
@@ -124,6 +123,7 @@ const createProblem = async (req, res) => {
       problemCreator: req.result._id
     });
 
+    invalidateProblemCaches();
     res.status(201).send("Problem Saved Successfully");
   }
   catch (err) {
@@ -234,6 +234,7 @@ const updateProblem = async (req, res) => {
 
     const newProblem = await Problem.findByIdAndUpdate(id, { ...req.body }, { runValidators: true, new: true });
 
+    invalidateProblemCaches();
     res.status(200).send(newProblem);
   }
   catch (err) {
@@ -254,7 +255,7 @@ const deleteProblem = async (req, res) => {
     if (!deletedProblem)
       return res.status(404).send("Problem is Missing");
 
-
+    invalidateProblemCaches();
     res.status(200).send("Successfully Deleted");
   }
   catch (err) {
@@ -272,26 +273,10 @@ const getProblemById = async (req, res) => {
     if (!id)
       return res.status(400).send("ID is Missing");
 
-    const getProblem = await Problem.findById(id).select('_id title description difficulty tags visibleTestCases startCode referenceSolution ');
-
-    // video ka jo bhi url wagera le aao
+    const getProblem = await Problem.findById(id).select('_id title description difficulty tags visibleTestCases startCode referenceSolution source problemType leetcodeLink slug topics companies frequency acceptance');
 
     if (!getProblem)
       return res.status(404).send("Problem is Missing");
-
-    const videos = await SolutionVideo.findOne({ problemId: id });
-
-    if (videos) {
-
-      const responseData = {
-        ...getProblem.toObject(),
-        secureUrl: videos.secureUrl,
-        thumbnailUrl: videos.thumbnailUrl,
-        duration: videos.duration,
-      }
-
-      return res.status(200).send(responseData);
-    }
 
     res.status(200).send(getProblem);
 
@@ -301,43 +286,100 @@ const getProblemById = async (req, res) => {
   }
 }
 
-const getAllProblem = async (req, res) => {
+const LIST_PROJECTION = 'title slug difficulty tags topics source problemType leetcodeLink frequency acceptance companyCount companies';
+const LIST_SORT = { companyCount: -1, frequency: -1, title: 1 };
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
+// In-memory caches (same for every user; rebuilt every few minutes).
+// CACHE CLEARED - fresh load on startup
+let _listCache = { data: null, at: 0 };
+let _companiesCache = { data: null, at: 0 };
+
+// Build the lightweight, sorted problem list with computed acceptanceRate.
+async function buildProblemList(filter = {}) {
+  const problems = await Problem.find(filter).select(LIST_PROJECTION).sort(LIST_SORT).lean();
+  if (problems.length === 0) return [];
+
+  // Live acceptance for solvable problems via ONE aggregation (not per-problem).
+  const solvableIds = problems.filter((p) => p.problemType !== 'catalog').map((p) => p._id);
+  const statsMap = {};
+  if (solvableIds.length) {
+    const stats = await Submission.aggregate([
+      { $match: { problemId: { $in: solvableIds } } },
+      { $group: { _id: '$problemId', total: { $sum: 1 }, accepted: { $sum: { $cond: [{ $eq: ['$status', 'accepted'] }, 1, 0] } } } },
+    ]);
+    stats.forEach((s) => { statsMap[s._id.toString()] = s.total > 0 ? parseFloat(((s.accepted / s.total) * 100).toFixed(1)) : 0; });
+  }
+
+  return problems.map((p) => {
+    const acceptanceRate = p.problemType === 'catalog'
+      ? (p.acceptance != null ? parseFloat((p.acceptance * 100).toFixed(1)) : 0)
+      : (statsMap[p._id.toString()] ?? 0);
+    return { ...p, acceptanceRate };
+  });
+}
+
+// Warm the unfiltered list + companies caches (called on boot and lazily).
+async function warmProblemCaches() {
   try {
+    _listCache = { data: await buildProblemList({}), at: Date.now() };
+    const names = await Problem.distinct('companies.name');
+    _companiesCache = { data: names.filter(Boolean).sort((a, b) => a.localeCompare(b)), at: Date.now() };
+  } catch (err) {
+    console.error('warmProblemCaches failed:', err.message);
+  }
+}
 
-    const problems = await Problem.find({}).select('_id title difficulty tags');
+const getAllProblem = async (req, res) => {
+  try {
+    const { company, difficulty, tag, type, search } = req.query;
+    const hasFilter = company || (difficulty && difficulty !== 'all') || (tag && tag !== 'all') || (type && type !== 'all') || search;
 
-    if (problems.length == 0)
-      return res.status(404).send("Problem is Missing");
+    // Unfiltered (the default page load): serve from cache.
+    if (!hasFilter) {
+      if (_listCache.data && Date.now() - _listCache.at < CACHE_TTL_MS) {
+        return res.status(200).send(_listCache.data);
+      }
+      const data = await buildProblemList({});
+      _listCache = { data, at: Date.now() };
+      return res.status(200).send(data);
+    }
 
-    // Calculate acceptance rate for each problem
-    const problemsWithStats = await Promise.all(
-      problems.map(async (problem) => {
-        const totalSubmissions = await Submission.countDocuments({
-          problemId: problem._id
-        });
+    // Filtered query (e.g. by company): go to DB.
+    const filter = {};
+    if (company) filter['companies.name'] = company;
+    if (difficulty && difficulty !== 'all') filter.difficulty = difficulty;
+    if (tag && tag !== 'all') filter.tags = tag;
+    if (type && type !== 'all') filter.problemType = type;
+    if (search) filter.title = { $regex: search, $options: 'i' };
 
-        const acceptedSubmissions = await Submission.countDocuments({
-          problemId: problem._id,
-          status: 'accepted'
-        });
-
-        const acceptanceRate = totalSubmissions > 0
-          ? ((acceptedSubmissions / totalSubmissions) * 100).toFixed(1)
-          : '0.0';
-
-        return {
-          ...problem.toObject(),
-          acceptanceRate: parseFloat(acceptanceRate)
-        };
-      })
-    );
-
-    res.status(200).send(problemsWithStats);
+    const result = await buildProblemList(filter);
+    res.status(200).send(result);
   }
   catch (err) {
     res.status(500).send("Error: " + err);
   }
+}
+
+// Distinct company list for the Problems page company filter (cached).
+const getCompanies = async (req, res) => {
+  try {
+    if (_companiesCache.data && Date.now() - _companiesCache.at < CACHE_TTL_MS) {
+      return res.status(200).send(_companiesCache.data);
+    }
+    const names = await Problem.distinct('companies.name');
+    const companies = names.filter(Boolean).sort((a, b) => a.localeCompare(b));
+    _companiesCache = { data: companies, at: Date.now() };
+    res.status(200).send(companies);
+  } catch (err) {
+    res.status(500).send("Error: " + err);
+  }
+}
+
+// Invalidate caches when problems are created/updated/deleted.
+function invalidateProblemCaches() {
+  _listCache = { data: null, at: 0 };
+  _companiesCache = { data: null, at: 0 };
 }
 
 
@@ -382,6 +424,6 @@ const submittedProblem = async (req, res) => {
 
 
 
-module.exports = { createProblem, updateProblem, deleteProblem, getProblemById, getAllProblem, solvedAllProblembyUser, submittedProblem };
+module.exports = { createProblem, updateProblem, deleteProblem, getProblemById, getAllProblem, getCompanies, solvedAllProblembyUser, submittedProblem, warmProblemCaches, invalidateProblemCaches };
 
 

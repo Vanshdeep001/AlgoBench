@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router';
-import { Code, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import UserDropdown from '../../../components/UserDropdown';
 
 export default function CommunityNav({ user }) {
@@ -15,6 +15,9 @@ export default function CommunityNav({ user }) {
 
     useEffect(() => {
         document.body.style.overflow = mobileMenuOpen ? 'hidden' : 'unset';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
     }, [mobileMenuOpen]);
 
     return (
@@ -22,7 +25,7 @@ export default function CommunityNav({ user }) {
             <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'py-4' : 'py-6'}`}>
                 <div className="container mx-auto px-4">
                     <div
-                        className="mx-auto max-w-7xl rounded-full backdrop-blur-md transition-all duration-300"
+                        className="mx-auto max-w-5xl rounded-full backdrop-blur-md transition-all duration-300"
                         style={{
                             border: `1px solid rgba(255,255,255,${scrolled ? '0.1' : '0.08'})`,
                             backgroundColor: scrolled ? 'rgba(11, 11, 14, 0.8)' : 'transparent',
@@ -31,13 +34,9 @@ export default function CommunityNav({ user }) {
                         }}
                     >
                         <div className="flex items-center justify-between">
-                            <NavLink to="/problems" className="flex items-center gap-2">
-                                <div className="p-2 rounded-xl" style={{ backgroundColor: '#0B0B0E', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                    <Code className="w-5 h-5" style={{ color: '#D4AF37' }} />
-                                </div>
-                                <span className="text-lg md:text-xl font-display font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-                                    AlgoBench
-                                </span>
+                            <NavLink to="/problems" className="flex items-center gap-2.5">
+                                <img src="/algobench_logo_2_no_text.png?v=4" alt="AlgoBench" className="w-[28px] h-[28px] object-contain" />
+                                <span className="text-lg md:text-xl font-logo font-bold tracking-[0.03em] uppercase bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">AlgoBench</span>
                             </NavLink>
 
                             <div className="hidden md:flex items-center gap-8 text-sm font-medium" style={{ color: '#9A9A9A' }}>

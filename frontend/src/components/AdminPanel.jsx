@@ -9,10 +9,16 @@ const VALID_TAGS = ['array', 'linkedList', 'graph', 'dp'];
 
 /** Normalize imported JSON to form shape. Tags must be one of VALID_TAGS. */
 function normalizeImportedProblem(json) {
-  let tags = (json.tags || 'array').toString().trim();
-  const firstWord = tags.split(/[\s,]+/)[0]?.toLowerCase();
-  if (VALID_TAGS.includes(firstWord)) tags = firstWord;
-  else tags = 'array';
+  let tags = (json.tags || 'array').toString().trim().toLowerCase();
+
+  // Broad mapping for common variations
+  if (tags.includes('linked')) tags = 'linkedList';
+  else if (tags.includes('graph')) tags = 'graph';
+  else if (tags.includes('dp') || tags.includes('recursion') || tags.includes('dynamic')) tags = 'dp';
+  else if (tags.includes('array')) tags = 'array';
+
+  // Final fallback to array if still not in VALID_TAGS
+  if (!VALID_TAGS.includes(tags)) tags = 'array';
 
   const visibleTestCases = (json.visibleTestCases || []).map((tc) => ({
     input: tc.input ?? '',
@@ -194,7 +200,7 @@ function AdminPanel() {
           Load into form
         </button>
       </div>
-      
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Basic Information */}
         <div className="card bg-base-100 shadow-lg p-6">
@@ -262,7 +268,7 @@ function AdminPanel() {
         {/* Test Cases */}
         <div className="card bg-base-100 shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Test Cases</h2>
-          
+
           {/* Visible Test Cases */}
           <div className="space-y-4 mb-6">
             <div className="flex justify-between items-center">
@@ -275,7 +281,7 @@ function AdminPanel() {
                 Add Visible Case
               </button>
             </div>
-            
+
             {visibleFields.map((field, index) => (
               <div key={field.id} className="border p-4 rounded-lg space-y-2">
                 <div className="flex justify-end">
@@ -287,19 +293,19 @@ function AdminPanel() {
                     Remove
                   </button>
                 </div>
-                
+
                 <input
                   {...register(`visibleTestCases.${index}.input`)}
                   placeholder="Input"
                   className="input input-bordered w-full"
                 />
-                
+
                 <input
                   {...register(`visibleTestCases.${index}.output`)}
                   placeholder="Output"
                   className="input input-bordered w-full"
                 />
-                
+
                 <textarea
                   {...register(`visibleTestCases.${index}.explanation`)}
                   placeholder="Explanation"
@@ -321,7 +327,7 @@ function AdminPanel() {
                 Add Hidden Case
               </button>
             </div>
-            
+
             {hiddenFields.map((field, index) => (
               <div key={field.id} className="border p-4 rounded-lg space-y-2">
                 <div className="flex justify-end">
@@ -333,13 +339,13 @@ function AdminPanel() {
                     Remove
                   </button>
                 </div>
-                
+
                 <input
                   {...register(`hiddenTestCases.${index}.input`)}
                   placeholder="Input"
                   className="input input-bordered w-full"
                 />
-                
+
                 <input
                   {...register(`hiddenTestCases.${index}.output`)}
                   placeholder="Output"
@@ -353,14 +359,14 @@ function AdminPanel() {
         {/* Code Templates */}
         <div className="card bg-base-100 shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Code Templates</h2>
-          
+
           <div className="space-y-6">
             {[0, 1, 2].map((index) => (
               <div key={index} className="space-y-2">
                 <h3 className="font-medium">
                   {index === 0 ? 'C++' : index === 1 ? 'Java' : 'JavaScript'}
                 </h3>
-                
+
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text">Initial Code</span>
@@ -373,7 +379,7 @@ function AdminPanel() {
                     />
                   </pre>
                 </div>
-                
+
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text">Reference Solution</span>

@@ -14,7 +14,9 @@ const ControlPanel = ({
   setArraySize,
   progress,
   sidebarCollapsed,
-  setSidebarCollapsed
+  setSidebarCollapsed,
+  onReset,
+  onStep
 }) => {
   const handlePlayPause = () => {
     if (!selectedAlgorithm) return;
@@ -23,56 +25,84 @@ const ControlPanel = ({
 
   const handleReset = () => {
     setIsPlaying(false);
-    // Reset will be handled by parent
+    if (onReset) onReset();
   };
 
   const handleStep = () => {
     if (!selectedAlgorithm) return;
-    // Step logic handled by parent
+    if (onStep) onStep();
   };
+
+  const hasInputs = !isPlaying && selectedAlgorithm && ['array', 'graph', 'tree', 'dp', 'backtracking', 'math'].includes(selectedAlgorithm.visualizationType);
 
   return (
     <div className="control-card-new">
       <div className="control-card-content">
-        {/* Sidebar Toggle Button - Only show when collapsed */}
-        {sidebarCollapsed && (
-          <button
-            className="sidebar-toggle-in-panel"
-            onClick={() => setSidebarCollapsed(false)}
-            title="Expand Sidebar"
-          >
-            <ChevronRight size={18} />
-          </button>
-        )}
+
+        {/* Algorithm Identity */}
+        <div className="control-identity">
+          {selectedAlgorithm ? (
+            <>
+              <span className="control-identity-name">{selectedAlgorithm.name}</span>
+              <span className="control-identity-meta">
+                <span className="control-identity-badge">{selectedAlgorithm.visualizationType}</span>
+                {selectedAlgorithm.complexity && (
+                  <span className="control-identity-complexity">{selectedAlgorithm.complexity}</span>
+                )}
+              </span>
+            </>
+          ) : (
+            <span className="control-identity-name dim">Playground</span>
+          )}
+        </div>
+
+        {hasInputs && <div className="control-divider" />}
 
         {/* Array Size Input - Only for array algorithms */}
         {!isPlaying && selectedAlgorithm?.visualizationType === 'array' && (
           <div className="control-inputs">
-            <div className="control-input-group">
-              <label className="control-label">Array Size</label>
+            <div className="control-input-inline">
+              <label className="control-label-inline">Array Size :</label>
               <input
                 type="number"
                 className="control-input-new"
+                style={{ width: '60px' }}
                 min="5"
-                max="50"
+                max="100"
                 value={arraySize}
-                onChange={(e) => setArraySize(parseInt(e.target.value) || 10)}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (!isNaN(val) && val >= 2 && val <= 100) {
+                     setArraySize(val);
+                  } else if (e.target.value === '') {
+                     setArraySize('');
+                  }
+                }}
+                onBlur={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (isNaN(val) || val < 2) setArraySize(5);
+                  if (val > 100) setArraySize(100);
+                }}
                 disabled={isPlaying}
               />
             </div>
 
             {selectedAlgorithm?.name?.toLowerCase().includes('search') && (
-              <div className="control-input-group">
-                <label className="control-label">Target</label>
-                <input
-                  type="number"
-                  className="control-input-new"
-                  placeholder="e.g., 42"
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
-                  disabled={isPlaying}
-                />
-              </div>
+              <>
+                <div className="control-input-divider" />
+                <div className="control-input-inline">
+                  <label className="control-label-inline">Target :</label>
+                  <input
+                    type="number"
+                    className="control-input-new"
+                    style={{ width: '70px' }}
+                    placeholder="e.g., 42"
+                    value={target}
+                    onChange={(e) => setTarget(e.target.value)}
+                    disabled={isPlaying}
+                  />
+                </div>
+              </>
             )}
           </div>
         )}
@@ -80,12 +110,13 @@ const ControlPanel = ({
         {/* Graph-specific inputs */}
         {!isPlaying && selectedAlgorithm?.visualizationType === 'graph' && (
           <div className="control-inputs">
-            <div className="control-input-group">
-              <label className="control-label">Start Node</label>
+            <div className="control-input-inline">
+              <label className="control-label-inline">Start Node :</label>
               <input
                 type="text"
                 className="control-input-new"
-                placeholder="e.g., A or 0"
+                style={{ width: '80px' }}
+                placeholder="e.g., A"
                 value={inputData}
                 onChange={(e) => setInputData(e.target.value)}
                 disabled={isPlaying}
@@ -93,17 +124,21 @@ const ControlPanel = ({
             </div>
 
             {selectedAlgorithm?.name?.toLowerCase().includes('dijkstra') && (
-              <div className="control-input-group">
-                <label className="control-label">End Node</label>
-                <input
-                  type="text"
-                  className="control-input-new"
-                  placeholder="e.g., F or 5"
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
-                  disabled={isPlaying}
-                />
-              </div>
+              <>
+                <div className="control-input-divider" />
+                <div className="control-input-inline">
+                  <label className="control-label-inline">End Node :</label>
+                  <input
+                    type="text"
+                    className="control-input-new"
+                    style={{ width: '80px' }}
+                    placeholder="e.g., F"
+                    value={target}
+                    onChange={(e) => setTarget(e.target.value)}
+                    disabled={isPlaying}
+                  />
+                </div>
+              </>
             )}
           </div>
         )}
@@ -111,12 +146,13 @@ const ControlPanel = ({
         {/* Tree-specific inputs */}
         {!isPlaying && selectedAlgorithm?.visualizationType === 'tree' && (
           <div className="control-inputs">
-            <div className="control-input-group">
-              <label className="control-label">Values to Insert</label>
+            <div className="control-input-inline">
+              <label className="control-label-inline">Values :</label>
               <input
                 type="text"
                 className="control-input-new"
-                placeholder="e.g., 50,30,70,20,40"
+                style={{ width: '160px' }}
+                placeholder="e.g., 50,30,70"
                 value={inputData}
                 onChange={(e) => setInputData(e.target.value)}
                 disabled={isPlaying}
@@ -125,17 +161,21 @@ const ControlPanel = ({
 
             {(selectedAlgorithm?.name?.toLowerCase().includes('search') ||
               selectedAlgorithm?.name?.toLowerCase().includes('delete')) && (
-                <div className="control-input-group">
-                  <label className="control-label">Target Value</label>
-                  <input
-                    type="text"
-                    className="control-input-new"
-                    placeholder="e.g., 30"
-                    value={target}
-                    onChange={(e) => setTarget(e.target.value)}
-                    disabled={isPlaying}
-                  />
-                </div>
+                <>
+                  <div className="control-input-divider" />
+                  <div className="control-input-inline">
+                    <label className="control-label-inline">Target :</label>
+                    <input
+                      type="text"
+                      className="control-input-new"
+                      style={{ width: '60px' }}
+                      placeholder="e.g., 30"
+                      value={target}
+                      onChange={(e) => setTarget(e.target.value)}
+                      disabled={isPlaying}
+                    />
+                  </div>
+                </>
               )}
           </div>
         )}
@@ -144,12 +184,13 @@ const ControlPanel = ({
         {!isPlaying && selectedAlgorithm?.visualizationType === 'dp' && (
           <div className="control-inputs">
             {selectedAlgorithm?.id === 'fibonacci' && (
-              <div className="control-input-group">
-                <label className="control-label">N Value</label>
+              <div className="control-input-inline">
+                <label className="control-label-inline">Value :</label>
                 <input
                   type="text"
                   className="control-input-new"
-                  placeholder="e.g., 10 or n: 10"
+                  style={{ width: '100px' }}
+                  placeholder="e.g., 10"
                   value={inputData}
                   onChange={(e) => setInputData(e.target.value)}
                   disabled={isPlaying}
@@ -158,12 +199,13 @@ const ControlPanel = ({
             )}
 
             {selectedAlgorithm?.id === 'knapsack' && (
-              <div className="control-input-group">
-                <label className="control-label">Knapsack Input</label>
+              <div className="control-input-inline">
+                <label className="control-label-inline">Items & Capacity :</label>
                 <input
                   type="text"
                   className="control-input-new"
-                  placeholder="weights: 2,3,4; values: 3,4,5; capacity: 5"
+                  style={{ width: '260px' }}
+                  placeholder="weights: 2,3; capacity: 5"
                   value={inputData}
                   onChange={(e) => setInputData(e.target.value)}
                   disabled={isPlaying}
@@ -177,12 +219,13 @@ const ControlPanel = ({
         {!isPlaying && selectedAlgorithm?.visualizationType === 'backtracking' && (
           <div className="control-inputs">
             {selectedAlgorithm?.id === 'nqueens' && (
-              <div className="control-input-group">
-                <label className="control-label">Board Size (N)</label>
+              <div className="control-input-inline">
+                <label className="control-label-inline">Grid Size :</label>
                 <input
                   type="text"
                   className="control-input-new"
-                  placeholder="e.g., 8 or n: 8"
+                  style={{ width: '80px' }}
+                  placeholder="e.g., 8"
                   value={inputData}
                   onChange={(e) => setInputData(e.target.value)}
                   disabled={isPlaying}
@@ -191,12 +234,13 @@ const ControlPanel = ({
             )}
 
             {selectedAlgorithm?.id === 'subsetsum' && (
-              <div className="control-input-group">
-                <label className="control-label">Subset Sum Input</label>
+              <div className="control-input-inline">
+                <label className="control-label-inline">Values & Target :</label>
                 <input
                   type="text"
                   className="control-input-new"
-                  placeholder="array: 3,5,2,7; target: 10"
+                  style={{ width: '220px' }}
+                  placeholder="array: 3,5,2; target: 10"
                   value={inputData}
                   onChange={(e) => setInputData(e.target.value)}
                   disabled={isPlaying}
@@ -205,12 +249,13 @@ const ControlPanel = ({
             )}
 
             {selectedAlgorithm?.id === 'ratmaze' && (
-              <div className="control-input-group">
-                <label className="control-label">Maze Construction</label>
+              <div className="control-input-inline">
+                <label className="control-label-inline">Maze Size :</label>
                 <input
                   type="text"
                   className="control-input-new"
-                  placeholder="n: 10 or custom maze"
+                  style={{ width: '100px' }}
+                  placeholder="e.g., 10"
                   value={inputData}
                   onChange={(e) => setInputData(e.target.value)}
                   disabled={isPlaying}
@@ -219,12 +264,13 @@ const ControlPanel = ({
             )}
 
             {selectedAlgorithm?.id === 'sudoku' && (
-              <div className="control-input-group">
-                <label className="control-label">Sudoku Board</label>
+              <div className="control-input-inline">
+                <label className="control-label-inline">Board State :</label>
                 <input
                   type="text"
                   className="control-input-new"
-                  placeholder="difficulty: hard or custom board"
+                  style={{ width: '200px' }}
+                  placeholder="difficulty: hard"
                   value={inputData}
                   onChange={(e) => setInputData(e.target.value)}
                   disabled={isPlaying}
@@ -238,12 +284,13 @@ const ControlPanel = ({
         {!isPlaying && selectedAlgorithm?.visualizationType === 'math' && (
           <div className="control-inputs">
             {selectedAlgorithm?.id === 'factorial' && (
-              <div className="control-input-group">
-                <label className="control-label">N Value</label>
+              <div className="control-input-inline">
+                <label className="control-label-inline">Value :</label>
                 <input
                   type="text"
                   className="control-input-new"
-                  placeholder="e.g., 10 or n: 10"
+                  style={{ width: '80px' }}
+                  placeholder="e.g., 10"
                   value={inputData}
                   onChange={(e) => setInputData(e.target.value)}
                   disabled={isPlaying}
@@ -252,11 +299,12 @@ const ControlPanel = ({
             )}
 
             {selectedAlgorithm?.id === 'gcd' && (
-              <div className="control-input-group">
-                <label className="control-label">GCD Input</label>
+              <div className="control-input-inline">
+                <label className="control-label-inline">Numbers :</label>
                 <input
                   type="text"
                   className="control-input-new"
+                  style={{ width: '120px' }}
                   placeholder="a: 48; b: 18"
                   value={inputData}
                   onChange={(e) => setInputData(e.target.value)}
@@ -266,12 +314,13 @@ const ControlPanel = ({
             )}
 
             {selectedAlgorithm?.id === 'sieve' && (
-              <div className="control-input-group">
-                <label className="control-label">Limit (N)</label>
+              <div className="control-input-inline">
+                <label className="control-label-inline">Limit :</label>
                 <input
                   type="text"
                   className="control-input-new"
-                  placeholder="e.g., 50 or n: 50"
+                  style={{ width: '80px' }}
+                  placeholder="e.g., 50"
                   value={inputData}
                   onChange={(e) => setInputData(e.target.value)}
                   disabled={isPlaying}
@@ -280,11 +329,12 @@ const ControlPanel = ({
             )}
 
             {selectedAlgorithm?.id === 'exponentiation' && (
-              <div className="control-input-group">
-                <label className="control-label">Exponentiation Input</label>
+              <div className="control-input-inline">
+                <label className="control-label-inline">Base & Exponent :</label>
                 <input
                   type="text"
                   className="control-input-new"
+                  style={{ width: '180px' }}
                   placeholder="base: 2; exponent: 10"
                   value={inputData}
                   onChange={(e) => setInputData(e.target.value)}
@@ -295,10 +345,11 @@ const ControlPanel = ({
           </div>
         )}
 
-        {/* Speed Control */}
-        <div className="control-speed">
-          <label className="control-label">Speed</label>
-          <div className="speed-control-new">
+        {/* Right cluster: speed + transport */}
+        <div className="control-right">
+          {/* Speed Control */}
+          <div className="control-speed">
+            <span className="control-speed-label">Speed</span>
             <input
               type="range"
               className="speed-slider-new"
@@ -306,37 +357,42 @@ const ControlPanel = ({
               max="100"
               value={speed}
               onChange={(e) => setSpeed(parseInt(e.target.value))}
+              style={{
+                background: `linear-gradient(90deg, #F4D03F 0%, #D4AF37 ${((speed - 10) / 90) * 100}%, rgba(255,255,255,0.08) ${((speed - 10) / 90) * 100}%)`,
+              }}
             />
             <span className="speed-value-new">{speed}%</span>
           </div>
-        </div>
 
-        {/* Playback Controls */}
-        <div className="control-buttons">
-          <button
-            className="control-btn-new secondary"
-            onClick={handleReset}
-            disabled={!selectedAlgorithm}
-            title="Reset"
-          >
-            <RotateCcw size={18} />
-          </button>
-          <button
-            className="control-btn-new secondary"
-            onClick={handleStep}
-            disabled={!selectedAlgorithm || isPlaying}
-            title="Step Forward"
-          >
-            <StepForward size={18} />
-          </button>
-          <button
-            className="control-btn-new primary"
-            onClick={handlePlayPause}
-            disabled={!selectedAlgorithm}
-            title={isPlaying ? "Pause" : "Play"}
-          >
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-          </button>
+          <div className="control-divider" />
+
+          {/* Playback Controls */}
+          <div className="control-buttons">
+            <button
+              className="control-btn-new secondary"
+              onClick={handleReset}
+              disabled={!selectedAlgorithm}
+              title="Reset"
+            >
+              <RotateCcw size={15} />
+            </button>
+            <button
+              className="control-btn-new secondary"
+              onClick={handleStep}
+              disabled={!selectedAlgorithm || isPlaying}
+              title="Step Forward"
+            >
+              <StepForward size={15} />
+            </button>
+            <button
+              className="control-btn-new primary"
+              onClick={handlePlayPause}
+              disabled={!selectedAlgorithm}
+              title={isPlaying ? "Pause" : "Play"}
+            >
+              {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+            </button>
+          </div>
         </div>
 
         {/* Progress Bar */}

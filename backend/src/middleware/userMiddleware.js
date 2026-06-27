@@ -8,8 +8,7 @@ const userMiddleware = async (req, res, next) => {
 
         // Check for 'token' cookie first, then fallback to 'admin_auth'
         const token = req.cookies.token || req.cookies.admin_auth;
-        console.log('Cookies received:', req.cookies);
-        console.log('Token:', token ? 'Present' : 'Missing');
+
 
         if (!token)
             throw new Error("Token is not persent");

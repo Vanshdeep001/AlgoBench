@@ -1,0 +1,383 @@
+/* ============================================================
+   UserDropdown — Premium Editorial Design
+   Matches the AlgoBench gold / dark technical aesthetic
+   ============================================================ */
+
+/* ─── Root container ─── */
+.ud-root {
+    position: relative;
+}
+
+/* ─── Trigger Button ─── */
+.ud-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+    box-shadow: none;
+}
+
+.ud-trigger:hover,
+.ud-trigger.open {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+/* Avatar with status dot */
+.ud-avatar-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px;
+    height: 34px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+/* Solid Square Avatar Trigger & Panel avatar */
+.ud-avatar-square {
+    width: 28px;
+    height: 28px;
+    background: #D4AF37;
+    color: #0B0B0E;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Hover & Open effects */
+.ud-trigger:hover .ud-avatar-square,
+.ud-trigger.open .ud-avatar-square {
+    background: #FFFFFF;
+    color: #0B0B0E;
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+}
+
+/* Dropdown Panel avatar specific alignment */
+.ud-panel-avatar-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+
+.panel-avatar-square {
+    width: 38px;
+    height: 38px;
+    font-size: 14px;
+    background: #D4AF37;
+}
+
+.ud-panel-avatar-wrap:hover .panel-avatar-square {
+    background: #FFFFFF;
+    color: #0B0B0E;
+    transform: scale(1.05);
+}
+
+/* Trigger text */
+.ud-trigger-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    text-align: left;
+}
+
+.ud-greeting {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 7px;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.3);
+    line-height: 1;
+}
+
+.ud-trigger-name {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #EDEDED;
+    letter-spacing: 0.04em;
+    transition: color 0.3s ease;
+}
+
+.ud-trigger:hover .ud-trigger-name,
+.ud-trigger.open .ud-trigger-name {
+    color: #D4AF37;
+}
+
+.ud-chevron {
+    color: rgba(255, 255, 255, 0.35);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+}
+
+.ud-chevron.rotated {
+    transform: rotate(180deg);
+    color: #D4AF37;
+}
+
+.ud-trigger:hover .ud-chevron {
+    color: rgba(212, 175, 55, 0.7);
+}
+
+/* ─── Dropdown Panel ─── */
+.ud-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 300px;
+    background: rgba(14, 14, 16, 0.98);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+    z-index: 1000;
+    animation: udSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: top right;
+}
+
+@keyframes udSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.94) translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ─── Identity Section ─── */
+.ud-identity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 18px 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ud-panel-avatar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.ud-panel-bracket {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 500;
+    color: rgba(212, 175, 55, 0.5);
+    user-select: none;
+    line-height: 1;
+}
+
+.ud-panel-avatar-text {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #FFF;
+    text-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+    line-height: 1;
+}
+
+.ud-identity-info {
+    flex: 1;
+    overflow: hidden;
+}
+
+.ud-identity-name {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+}
+
+.ud-identity-email {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+}
+
+.ud-role-badge {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+    flex-shrink: 0;
+}
+
+/* ─── Section Label Divider ─── */
+.ud-section-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px 6px;
+}
+
+.ud-section-divider span {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Nav Items ─── */
+.ud-nav {
+    padding: 4px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ud-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 10px;
+    border-radius: 10px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: transparent;
+}
+
+.ud-item:hover {
+    background: rgba(212, 175, 55, 0.07);
+    border-color: rgba(212, 175, 55, 0.12);
+}
+
+.ud-item.admin:hover {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: rgba(99, 102, 241, 0.15);
+}
+
+.ud-item-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.55);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.ud-item:hover .ud-item-icon {
+    color: #D4AF37;
+}
+
+.ud-item.admin:hover .ud-item-icon {
+    color: #818CF8;
+}
+
+.ud-item-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ud-item-label {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.75);
+    transition: color 0.2s ease;
+    letter-spacing: 0.02em;
+}
+
+.ud-item:hover .ud-item-label {
+    color: #D4AF37;
+}
+
+.ud-item.admin:hover .ud-item-label {
+    color: #818CF8;
+}
+
+.ud-item-desc {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: -0.01em;
+}
+
+.ud-item-arrow {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.15);
+    transition: all 0.2s ease;
+}
+
+.ud-item:hover .ud-item-arrow {
+    color: rgba(212, 175, 55, 0.6);
+    transform: translateX(3px);
+}
+
+/* ─── Footer / Logout ─── */
+.ud-footer {
+    padding: 10px 10px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 4px;
+}
+
+.ud-logout {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+}
+
+.ud-logout:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.04);
+}

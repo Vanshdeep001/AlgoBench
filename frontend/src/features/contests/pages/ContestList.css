@@ -1,0 +1,607 @@
+/* ============================================================
+   ContestList — Premium Cyber League Aesthetic
+   Matches the AlgoBench matte black and gold technical aesthetic
+   ============================================================ */
+
+.cl-root {
+    min-height: 100vh;
+    background-color: #08080a;
+    color: #EDEDED;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    position: relative;
+}
+
+/* Background gradient nodes */
+.cl-glow-1 {
+    position: fixed;
+    top: -10%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.04);
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.cl-glow-2 {
+    position: fixed;
+    bottom: -10%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.02);
+    filter: blur(128px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.cl-noise {
+    position: fixed;
+    inset: 0;
+    background-image: url("/noise.svg");
+    opacity: 0.15;
+    mix-blend-overlay: overlay;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Main Container */
+.cl-container {
+    position: relative;
+    z-index: 10;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 140px 40px 100px;
+}
+
+/* Header */
+.cl-header {
+    margin-bottom: 80px;
+    position: relative;
+    padding-top: 32px;
+}
+
+.cl-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(3rem, 8vw, 5rem);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    text-transform: uppercase;
+    margin: 0 0 32px 0;
+    color: #FFFFFF;
+}
+
+.cl-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.5);
+    max-width: 600px;
+    line-height: 1.6;
+    border-left: 2px solid #D4AF37;
+    padding-left: 24px;
+}
+
+/* ── Stats Strip ── */
+.cl-stats-strip {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 64px;
+    padding: 32px 40px;
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+}
+
+.cl-stats-strip::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.03) 0%, transparent 50%, rgba(255, 255, 255, 0.01) 100%);
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .cl-stats-strip {
+        flex-direction: column;
+        gap: 20px;
+        padding: 24px 20px;
+    }
+}
+
+.cl-stat-pod {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.cl-stat-ring {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cl-stat-ring-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.cl-stat-ring-number {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: #FFFFFF;
+    position: relative;
+    z-index: 2;
+}
+
+.cl-stat-live-dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 10px #22c55e, 0 0 20px rgba(34, 197, 94, 0.4);
+    animation: clLivePulse 2s infinite;
+    z-index: 3;
+}
+
+@keyframes clLivePulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+}
+
+.cl-stat-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.cl-stat-label {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.cl-stat-sublabel {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.cl-stat-divider {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .cl-stat-divider {
+        width: 60%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    }
+}
+
+/* ── Underlined Tabs Deck ── */
+.cl-tabs-deck {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 40px;
+}
+
+.cl-tab-btn {
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 14px 24px;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    border-radius: 0;
+}
+
+.cl-tab-btn:hover {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.cl-tab-btn.active {
+    color: #D4AF37;
+}
+
+.cl-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #D4AF37;
+}
+
+/* ── Loader ── */
+.cl-loader-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 96px 0;
+}
+
+.cl-loader-ring {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid rgba(212, 175, 55, 0.15);
+    border-top-color: #D4AF37;
+    animation: clSpin 0.8s linear infinite;
+}
+
+@keyframes clSpin {
+    to { transform: rotate(360deg); }
+}
+
+.cl-loader-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+}
+
+/* ── Content Area ── */
+.cl-content-area {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+/* ── Section Headings ── */
+.cl-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cl-section-heading {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.cl-section-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.cl-section-dot.live {
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+    animation: clLivePulse 2s infinite;
+}
+
+/* ── Empty State Row ── */
+.cl-empty-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0;
+    gap: 32px;
+}
+
+.cl-empty-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-width: 0;
+    flex: 1;
+}
+
+.cl-empty-right {
+    display: flex;
+    align-items: center;
+    gap: 64px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .cl-empty-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 24px;
+        padding: 20px;
+    }
+    .cl-empty-right {
+        width: 100%;
+        justify-content: space-between;
+        gap: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 16px;
+    }
+}
+
+.cl-empty-indicator {
+    width: 8px;
+    height: 8px;
+    background: #fbbf24; /* Amber status */
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.cl-empty-indicator.archive {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.cl-empty-text-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cl-empty-primary {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.cl-empty-secondary {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.4;
+}
+
+.cl-empty-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.cl-empty-meta-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 0.1em;
+}
+
+.cl-empty-meta-val {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.02em;
+}
+/* ── List Layout ── */
+.cl-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0;
+    overflow: hidden;
+}
+
+/* Contest Cards as Row Strips */
+.cl-card {
+    background: #08080a;
+    display: grid;
+    grid-template-columns: 80px 1fr 140px 180px 140px 80px;
+    align-items: center;
+    padding: 24px 32px;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.cl-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.03), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.cl-card:hover {
+    background: #0C0C0E;
+}
+
+.cl-card:hover::before {
+    transform: translateX(100%);
+}
+
+.cl-card-index {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    color: #D4AF37;
+    opacity: 0.5;
+}
+
+.cl-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.cl-card-status {
+    display: flex;
+    align-items: center;
+}
+
+.cl-card-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #FFFFFF;
+    transition: color 0.3s ease;
+    line-height: 1.1;
+}
+
+.cl-card:hover .cl-card-title {
+    color: #D4AF37;
+}
+
+/* Custom Status Badges */
+.cl-badge {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 8px 3px;
+    border-radius: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    line-height: 1;
+    position: relative;
+    top: 1px;
+}
+
+.cl-badge.live {
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.cl-badge.live::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px #22c55e;
+    animation: clLivePulse 1.5s infinite;
+}
+
+.cl-badge.upcoming {
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    color: #D4AF37;
+}
+
+.cl-badge.finished {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.cl-card-desc {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cl-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+}
+
+.cl-card-arrow {
+    color: rgba(255, 255, 255, 0.25);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
+    justify-self: end;
+}
+
+.cl-card:hover .cl-card-arrow {
+    transform: translateX(4px);
+    color: #D4AF37;
+}
+
+/* RESPONSIVE LAYOUT */
+@media (max-width: 1024px) {
+    .cl-card {
+        grid-template-columns: 60px 1fr 110px 140px 60px;
+    }
+    .cl-card-meta.problems-count {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .cl-container {
+        padding: 100px 20px 60px;
+    }
+    
+    .cl-card {
+        grid-template-columns: 40px 1fr 100px 40px;
+        padding: 16px 20px;
+    }
+    
+    .cl-card-meta {
+        display: none;
+    }
+    
+    .cl-card-title {
+        font-size: 14px;
+    }
+    
+    .cl-card-desc {
+        display: none;
+    }
+}

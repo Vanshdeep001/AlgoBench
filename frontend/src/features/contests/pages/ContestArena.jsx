@@ -104,7 +104,7 @@ export default function ContestArena() {
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: style.bg }}>
         <div className="text-center">
           <p className="text-[#EDEDED] mb-4">This attempt has ended.</p>
-          <Link to={`/contests/${contestId}/result`} className="text-[#D4AF37] font-semibold">View Result</Link>
+          <Link to={`/contests/${contestId}`} className="text-[#D4AF37] font-semibold">Back to Contest Overview</Link>
         </div>
       </div>
     );
