@@ -1,10 +1,10 @@
-# ⚡ AlgoBench — Elite DSA Coding & Visualizer Platform
+#  AlgoBench — Elite DSA Coding & Visualizer Platform
 
 AlgoBench is a premium, high-fidelity algorithmic preparation platform designed for software engineers. It features an interactive coding workspace, live step-by-step memory and pointer visualizers, curated corporate DSA preparation sheets, and a fully functional SaaS premium subscription module integrated with Razorpay.
 
 ---
 
-## 🚀 Key Features & Modules
+##  Key Features & Modules
 
 ### 1. Interactive Coding Workspace
 * **Monaco Editor Integration**: Full IDE capabilities with syntax highlighting, automatic indentation, autocomplete, and theme configuration.
@@ -43,7 +43,7 @@ AlgoBench is a premium, high-fidelity algorithmic preparation platform designed 
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```ascii
 AlgoBench/
@@ -77,7 +77,7 @@ AlgoBench/
 
 ---
 
-## 🔒 Security Hardening
+## Security Hardening
 
 AlgoBench is secured against OWASP Top 10 vulnerabilities with several protection layers:
 * **HTTP Security Headers**: Enforced via `helmet` to set CSP, clickjacking prevention (`X-Frame-Options`), HSTS, and MIME sniff block.
@@ -91,7 +91,7 @@ AlgoBench is secured against OWASP Top 10 vulnerabilities with several protectio
 
 ---
 
-## ⚡ Performance Optimizations
+## Performance Optimizations
 
 * **Frontend Code-Splitting**: Route components are dynamically imported using `React.lazy()` and `Suspense`, reducing the initial Javascript load bundle by up to **75%**.
 * **Database Indexes**: Schema-level single-field indexes are applied on `companies.name`, `difficulty`, `tags`, and `problemType` to ensure instant query responses on large libraries.
@@ -155,7 +155,7 @@ Open your browser and navigate to `http://localhost:5173`.
 
 ---
 
-## 📜 Legals & Compliance (Razorpay Staging Verification)
+## Legals & Compliance (Razorpay Staging Verification)
 For payment gateway verification, six static document policies are integrated:
 * [About Us](http://localhost:5173/about): Outlines the team, vision, and roadmap.
 * [Contact Us](http://localhost:5173/contact): Live query contact sheet.
